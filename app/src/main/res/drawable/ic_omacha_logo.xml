@@ -1,0 +1,45 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Matcha Mound -->
+    <path
+        android:fillColor="#7C8D67"
+        android:pathData="M60,90 C80,65 120,65 140,90 C150,100 135,110 120,114 C100,118 80,118 65,114 C50,110 50,100 60,90 Z" />
+
+    <!-- Chasen Handle -->
+    <path
+        android:fillColor="#8C6239"
+        android:pathData="M75,55 L90,70 L102,55 L87,40 Z" />
+
+    <!-- Chasen Band -->
+    <path
+        android:fillColor="#3B2411"
+        android:pathData="M83,47 L87,51 L94,43 L90,39 Z" />
+
+    <!-- Chasen Tines (Strings) -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="1.5"
+        android:pathData="M83,51 L74,90 M86,53 L80,92 M89,55 L86,94 M92,57 L92,94 M95,59 L98,92 M98,61 L104,90" />
+
+    <!-- Black Y / Yen Symbol -->
+    <!-- Left diagonal arm -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M42,36 L100,96 L108,88 L50,28 Z" />
+    <!-- Right diagonal arm -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M158,36 L100,96 L92,88 L150,28 Z" />
+    <!-- Horizontal crossbar -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M42,110 L158,110 L158,126 L42,126 Z" />
+    <!-- Vertical stem -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M92,110 L108,110 L108,180 L92,180 Z" />
+</vector>
