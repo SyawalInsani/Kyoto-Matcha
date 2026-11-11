@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,7 +32,6 @@ import com.example.kyotomatcha.ui.theme.MatchaGreen
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
 import com.example.kyotomatcha.ui.theme.TextMuted
 import com.example.kyotomatcha.ui.theme.White
-import kotlinx.coroutines.launch
 
 @Composable
 fun OnboardingScreen(
@@ -43,7 +41,6 @@ fun OnboardingScreen(
     val pages by viewModel.pages.collectAsState()
     val currentIndex by viewModel.currentIndex.collectAsState()
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(currentIndex) {
         if (pagerState.currentPage != currentIndex) {
@@ -88,7 +85,7 @@ fun OnboardingScreen(
                 }
 
                 Text(
-                    text = "Lewat",
+                    text = "Lewati",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     color = PrimaryDarkGreen,
