@@ -1,11 +1,15 @@
 package com.example.kyotomatcha.ui.screens.auth
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import com.example.kyotomatcha.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val authRepository = AuthRepository(application)
 
     // Login state
     private val _loginEmail = MutableStateFlow("")
@@ -17,7 +21,6 @@ class AuthViewModel : ViewModel() {
     private val _rememberMe = MutableStateFlow(true)
     val rememberMe: StateFlow<Boolean> = _rememberMe.asStateFlow()
 
-    // Login validation errors
     private val _showLoginErrorBanner = MutableStateFlow(false)
     val showLoginErrorBanner: StateFlow<Boolean> = _showLoginErrorBanner.asStateFlow()
 
@@ -52,7 +55,12 @@ class AuthViewModel : ViewModel() {
     private val _agreeTerms = MutableStateFlow(true)
     val agreeTerms: StateFlow<Boolean> = _agreeTerms.asStateFlow()
 
-    // Register validation errors
+    private val _lastRegisteredName = MutableStateFlow("Aulia Putri")
+    val lastRegisteredName: StateFlow<String> = _lastRegisteredName.asStateFlow()
+
+    private val _lastRegisteredEmail = MutableStateFlow("salsa@kyotomatcha.id")
+    val lastRegisteredEmail: StateFlow<String> = _lastRegisteredEmail.asStateFlow()
+
     private val _showRegisterErrorBanner = MutableStateFlow(false)
     val showRegisterErrorBanner: StateFlow<Boolean> = _showRegisterErrorBanner.asStateFlow()
 
@@ -136,6 +144,7 @@ class AuthViewModel : ViewModel() {
         _showLoginErrorBanner.value = hasErr
 
         if (!hasErr && !checkOnly) {
+            authRepository.loginUser(email, password)
             onSuccess()
         }
     }
@@ -172,6 +181,9 @@ class AuthViewModel : ViewModel() {
         _showRegisterErrorBanner.value = hasErr
 
         if (!hasErr && !checkOnly) {
+            if (name.isNotBlank()) _lastRegisteredName.value = name
+            if (email.isNotBlank()) _lastRegisteredEmail.value = email
+            authRepository.registerUser(name, email, password)
             onSuccess(email, name)
         }
     }
