@@ -197,7 +197,7 @@ fun EditProfileScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                     ProfileInfoRow(label = "Peran", value = "Kasir")
                     Spacer(modifier = Modifier.height(10.dp))
-                    ProfileInfoRow(label = "Cabang", value = "Kyoto Matcha")
+                    ProfileInfoRow(label = "Cabang", value = "Kyoto-Matcha")
                 }
             }
 

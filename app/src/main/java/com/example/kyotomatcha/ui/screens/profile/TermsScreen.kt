@@ -62,7 +62,7 @@ fun TermsScreen(
                 color = CardBackground
             ) {
                 Text(
-                    text = "Draf syarat penggunaan",
+                    text = "Syarat penggunaan O-MACHA",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
@@ -94,7 +94,7 @@ fun TermsScreen(
                 shadowElevation = 1.dp
             ) {
                 Text(
-                    text = "Draf ini menjelaskan penggunaan O-MACHA oleh tim Kyoto Matcha Senopati. Ketentuan perlu ditinjau dan disetujui pemilik sebelum diterapkan.",
+                    text = "Halaman ini menjelaskan ketentuan penggunaan O-MACHA oleh tim kedai Kyoto-Matcha.",
                     modifier = Modifier.padding(16.dp),
                     fontSize = 12.sp,
                     color = TextMuted,
@@ -123,7 +123,7 @@ fun TermsScreen(
             PolicySectionItem(
                 number = "03",
                 title = "Informasi layanan",
-                body = "O-MACHA mendukung absensi berbasis lokasi, pencatatan pesanan, QRIS, stok, dan laporan. Desain ini belum memproses lokasi atau pembayaran nyata."
+                body = "O-MACHA mendukung absensi berbasis lokasi, pencatatan pesanan, QRIS, stok, dan laporan operasional kedai."
             )
 
             Spacer(modifier = Modifier.height(24.dp))

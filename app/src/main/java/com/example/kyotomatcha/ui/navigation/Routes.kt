@@ -36,4 +36,10 @@ sealed class Routes(val route: String) {
     object AboutApp : Routes("about_app")
     object Terms : Routes("terms")
     object About : Routes("about")
+    object Inventory : Routes("inventory")
+    object InventoryHistory : Routes("inventory_history")
+    object StockIn : Routes("stock_in")
+    object StockOut : Routes("stock_out")
+    object Expense : Routes("expense")
+    object AddExpense : Routes("add_expense")
 }

@@ -20,6 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.util.DateUtil
+import com.example.kyotomatcha.util.CurrencyUtil
 import com.example.kyotomatcha.ui.components.BottomNavItem
 import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.CardBackground
@@ -32,15 +36,22 @@ import com.example.kyotomatcha.ui.theme.White
 fun OrderSummaryScreen(
     onNavigateBack: () -> Unit,
     onNavigateToQris: () -> Unit,
+    onNavigateToSavedOrder: () -> Unit,
     onNavigateHome: () -> Unit,
     onNavigateToAbsen: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onInventoryClick: () -> Unit,
     viewModel: OrderViewModel = viewModel()
 ) {
     val cart by viewModel.cart.collectAsState()
+    val selectedSource by viewModel.selectedSource.collectAsState()
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val userName = sessionManager.getUserName()
+    val currentDate = remember { DateUtil.getCurrentDateFormatted() }
     val scrollState = rememberScrollState()
 
-    val subtotal = viewModel.getTotalPrice()
+    val subtotal = cart.values.sumOf { it.menuItem.price * it.quantity }
     val total = subtotal
 
     Scaffold(
@@ -62,7 +73,16 @@ fun OrderSummaryScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onNavigateToQris() }
+                            .clickable {
+                                val isOffline = selectedSource.equals("Offline", ignoreCase = true)
+                                val currentStatus = viewModel.selectedOrderStatus.value
+                                viewModel.createOrder(currentStatus)
+                                if (isOffline && currentStatus.equals("Menunggu bayar", ignoreCase = true)) {
+                                    onNavigateToQris()
+                                } else {
+                                    onNavigateToSavedOrder()
+                                }
+                            }
                             .padding(vertical = 16.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -91,7 +111,7 @@ fun OrderSummaryScreen(
                         BottomNavItem(label = "Beranda", icon = Icons.Filled.Home, selected = false, onClick = onNavigateHome)
                         BottomNavItem(label = "Absen", icon = Icons.Filled.DateRange, selected = false, onClick = onNavigateToAbsen)
                         BottomNavItem(label = "Pesanan", icon = Icons.Filled.ShoppingBag, selected = true)
-                        BottomNavItem(label = "Inventoris", icon = Icons.Filled.Inventory2, selected = false)
+                        BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false, onClick = onInventoryClick)
                         BottomNavItem(label = "Profil", icon = Icons.Filled.Person, selected = false, onClick = onNavigateToProfile)
                     }
                 }
@@ -151,9 +171,9 @@ fun OrderSummaryScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "3 Nov 2026", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                    Text(text = currentDate, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text(text = "Salsa • Kyoto Matcha", fontSize = 12.sp, color = TextMuted)
+                    Text(text = "$userName • Kyoto-Matcha", fontSize = 12.sp, color = TextMuted)
                 }
 
                 Surface(
@@ -161,12 +181,41 @@ fun OrderSummaryScreen(
                     color = Color(0xFFFEF3C7)
                 ) {
                     Text(
-                        text = "Offline",
+                        text = selectedSource,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFFD97706)
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Status Selection Row
+            val selectedOrderStatus by viewModel.selectedOrderStatus.collectAsState()
+            Text(text = "Status Pesanan", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                listOf("Diproses", "Menunggu bayar", "Selesai").forEach { statusOpt ->
+                    val isSelected = selectedOrderStatus == statusOpt
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (isSelected) PrimaryDarkGreen else White,
+                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2DDD0)),
+                        modifier = Modifier.clickable { viewModel.setSelectedOrderStatus(statusOpt) }
+                    ) {
+                        Text(
+                            text = statusOpt,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isSelected) White else PrimaryDarkGreen,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        )
+                    }
                 }
             }
 
@@ -198,7 +247,7 @@ fun OrderSummaryScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Subtotal", fontSize = 13.sp, color = TextMuted)
-                        Text(text = "Rp$subtotal", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = PrimaryDarkGreen)
+                        Text(text = CurrencyUtil.formatRupiah(subtotal), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = PrimaryDarkGreen)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     HorizontalDivider(color = Color(0xFFF0EFEA))
@@ -208,7 +257,7 @@ fun OrderSummaryScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Total", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
-                        Text(text = "Rp$total", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                        Text(text = CurrencyUtil.formatRupiah(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                     }
                 }
             }
@@ -264,13 +313,13 @@ fun CartItemCard(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Rp${cartItem.menuItem.price} / item",
+                            text = "${CurrencyUtil.formatRupiah(cartItem.menuItem.price)} / item",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Rp$itemTotal",
+                            text = CurrencyUtil.formatRupiah(itemTotal),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryDarkGreen

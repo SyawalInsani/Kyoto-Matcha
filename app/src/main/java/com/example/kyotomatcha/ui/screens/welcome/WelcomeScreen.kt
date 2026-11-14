@@ -128,7 +128,7 @@ fun WelcomeScreen(
                             OmochaLogo(size = 56.dp)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Kyoto Matcha POS & Operasional",
+                                text = "Kyoto-Matcha POS & Operasional",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = PrimaryDarkGreen,

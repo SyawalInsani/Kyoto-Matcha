@@ -122,7 +122,7 @@ fun AboutAppScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "O-MACHA adalah aplikasi operasional kedai Kyoto Matcha untuk absensi berbasis lokasi, pencatatan pesanan dan pembayaran QRIS, inventaris, serta laporan harian.",
+                        text = "O-MACHA adalah aplikasi operasional kedai Kyoto-Matcha untuk absensi berbasis lokasi, pencatatan pesanan dan pembayaran QRIS, inventaris, serta laporan harian.",
                         fontSize = 12.sp,
                         color = TextMuted,
                         lineHeight = 18.sp
@@ -137,7 +137,7 @@ fun AboutAppScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Cabang", fontSize = 13.sp, color = TextMuted)
-                        Text(text = "Kyoto Matcha", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryDarkGreen)
+                        Text(text = "Kyoto-Matcha", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryDarkGreen)
                     }
                 }
             }

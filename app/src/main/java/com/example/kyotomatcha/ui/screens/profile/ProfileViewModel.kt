@@ -16,6 +16,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val _email = MutableStateFlow(sessionManager.getUserEmail().ifEmpty { "salsa@kyotomatcha.id" })
     val email: StateFlow<String> = _email.asStateFlow()
 
+    private val _role = MutableStateFlow(sessionManager.getUserRole().ifEmpty { "Kasir" })
+    val role: StateFlow<String> = _role.asStateFlow()
+
     private val _phone = MutableStateFlow("0812 8346 2705")
     val phone: StateFlow<String> = _phone.asStateFlow()
 
@@ -35,7 +38,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         _name.value = newName
         _email.value = newEmail
         _phone.value = newPhone
-        sessionManager.saveUser(newName, newEmail, sessionManager.getSavedPassword())
+        sessionManager.saveUser(newName, newEmail, sessionManager.getSavedPassword(), sessionManager.getUserRole())
     }
 
     fun toggleReminderAbsen(value: Boolean) { _reminderAbsen.value = value }

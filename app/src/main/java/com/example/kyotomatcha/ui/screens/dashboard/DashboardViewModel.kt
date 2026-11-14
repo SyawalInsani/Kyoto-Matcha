@@ -3,6 +3,7 @@ package com.example.kyotomatcha.ui.screens.dashboard
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.util.DateUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,10 +14,16 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _userName = MutableStateFlow(sessionManager.getUserName())
     val userName: StateFlow<String> = _userName.asStateFlow()
 
+    private val _userRole = MutableStateFlow(sessionManager.getUserRole())
+    val userRole: StateFlow<String> = _userRole.asStateFlow()
+
+    private val _currentDate = MutableStateFlow(DateUtil.getCurrentDateFormatted())
+    val currentDate: StateFlow<String> = _currentDate.asStateFlow()
+
     private val _branches = listOf("Ringkasan usaha")
     val branches: List<String> = _branches
 
-    private val _selectedBranch = MutableStateFlow("Kyoto Matcha")
+    private val _selectedBranch = MutableStateFlow("Kyoto-Matcha")
     val selectedBranch: StateFlow<String> = _selectedBranch.asStateFlow()
 
     private val _isDropdownExpanded = MutableStateFlow(false)

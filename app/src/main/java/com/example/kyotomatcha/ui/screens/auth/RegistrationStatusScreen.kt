@@ -115,7 +115,7 @@ fun RegistrationStatusScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "$email • Kyoto Matcha",
+                                text = "$email • Kyoto-Matcha",
                                 fontSize = 12.sp,
                                 color = TextMuted
                             )

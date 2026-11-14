@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,7 +62,7 @@ fun PrivacyPolicyScreen(
                 color = CardBackground
             ) {
                 Text(
-                    text = "Draf kebijakan privasi",
+                    text = "Kebijakan privasi O-MACHA",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
@@ -95,7 +94,7 @@ fun PrivacyPolicyScreen(
                 shadowElevation = 1.dp
             ) {
                 Text(
-                    text = "Draf ini menjelaskan pengelolaan data operasional O-MACHA. Kebijakan perlu ditinjau dan disetujui pemilik sebelum diterapkan.",
+                    text = "Kebijakan ini menjelaskan pengelolaan data operasional aplikasi O-MACHA untuk operasional kedai Kyoto-Matcha.",
                     modifier = Modifier.padding(16.dp),
                     fontSize = 12.sp,
                     color = TextMuted,
@@ -116,7 +115,7 @@ fun PrivacyPolicyScreen(
             PolicySectionItem(
                 number = "02",
                 title = "Lokasi absensi",
-                body = "Lokasi digunakan saat absensi untuk memeriksa keberadaan di kedai. Izin lokasi diminta melalui perangkat; aturan penyimpanan ditetapkan pemilik."
+                body = "Lokasi digunakan saat absensi untuk memeriksa keberadaan di kedai. Izin lokasi diminta melalui perangkat untuk verifikasi kehadiran."
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -124,13 +123,13 @@ fun PrivacyPolicyScreen(
             PolicySectionItem(
                 number = "03",
                 title = "Akses dan bantuan",
-                body = "Hubungi Aulia Putri selaku pemilik untuk meninjau atau memperbarui data akun. Ketentuan akses dan masa penyimpanan perlu disahkan sebelum penggunaan."
+                body = "Hubungi pemilik kedai Kyoto-Matcha untuk meninjau atau memperbarui data akun."
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Tampilan desain ini tidak mengumpulkan data pribadi.",
+                text = "O-MACHA — Operasional kedai Kyoto-Matcha.",
                 fontSize = 11.sp,
                 color = TextMuted
             )

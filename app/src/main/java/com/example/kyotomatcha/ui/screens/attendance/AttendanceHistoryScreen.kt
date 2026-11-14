@@ -36,11 +36,13 @@ fun AttendanceHistoryScreen(
     onNavigateToAbsen: () -> Unit,
     onNavigateToOrder: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onInventoryClick: () -> Unit,
     viewModel: AttendanceViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
     val userName = sessionManager.getUserName().ifEmpty { "Muhammad Syawal Insani" }
+    val userRole = sessionManager.getUserRole()
 
     val selectedTab by viewModel.selectedTab.collectAsState()
     val scrollState = rememberScrollState()
@@ -62,9 +64,9 @@ fun AttendanceHistoryScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     BottomNavItem(label = "Beranda", icon = Icons.Filled.Home, selected = false, onClick = onNavigateHome)
-                    BottomNavItem(label = "Absen", icon = Icons.AutoMirrored.Filled.Assignment, selected = true, onClick = onNavigateToAbsen)
+                    BottomNavItem(label = "Absen", icon = Icons.AutoMirrored.Filled.Assignment, selected = false, onClick = onNavigateToAbsen)
                     BottomNavItem(label = "Pesanan", icon = Icons.Filled.ShoppingBag, selected = false, onClick = onNavigateToOrder)
-                    BottomNavItem(label = "Inventoris", icon = Icons.Filled.Inventory2, selected = false)
+                    BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false, onClick = onInventoryClick)
                     BottomNavItem(label = "Profil", icon = Icons.Filled.Person, selected = false, onClick = onNavigateToProfile)
                 }
             }
@@ -104,7 +106,7 @@ fun AttendanceHistoryScreen(
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "$userName • Kasir",
+                            text = "$userName • $userRole",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
