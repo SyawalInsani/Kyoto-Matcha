@@ -2,7 +2,10 @@ package com.example.kyotomatcha.ui.screens.auth
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.kyotomatcha.data.repository.AuthRepository
+import com.example.kyotomatcha.data.repository.AuthResult
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,6 +13,14 @@ import kotlinx.coroutines.flow.asStateFlow
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository(application)
+
+    // Status panggilan ke server
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    // Pesan error dari server; kosong = pakai teks bawaan banner.
+    private val _serverError = MutableStateFlow("")
+    val serverError: StateFlow<String> = _serverError.asStateFlow()
 
     // Login state
     private val _loginEmail = MutableStateFlow("")
@@ -143,9 +154,19 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         _showLoginErrorBanner.value = hasErr
 
-        if (!hasErr && !checkOnly) {
-            authRepository.loginUser(email, password)
-            onSuccess()
+        if (!hasErr && !checkOnly && !_isLoading.value) {
+            viewModelScope.launch {
+                _isLoading.value = true
+                _serverError.value = ""
+                when (val result = authRepository.login(email, password)) {
+                    is AuthResult.Success -> onSuccess()
+                    is AuthResult.Error -> {
+                        _serverError.value = result.message
+                        _showLoginErrorBanner.value = true
+                    }
+                }
+                _isLoading.value = false
+            }
         }
     }
 
@@ -180,11 +201,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         _showRegisterErrorBanner.value = hasErr
 
-        if (!hasErr && !checkOnly) {
-            if (name.isNotBlank()) _lastRegisteredName.value = name
-            if (email.isNotBlank()) _lastRegisteredEmail.value = email
-            authRepository.registerUser(name, email, password)
-            onSuccess(email, name)
+        if (!hasErr && !checkOnly && !_isLoading.value) {
+            viewModelScope.launch {
+                _isLoading.value = true
+                _serverError.value = ""
+                when (val result = authRepository.register(name, email, phone, password)) {
+                    is AuthResult.Success -> {
+                        _lastRegisteredName.value = name
+                        _lastRegisteredEmail.value = email
+                        onSuccess(email, name)
+                    }
+                    is AuthResult.Error -> {
+                        _serverError.value = result.message
+                        _regEmailError.value = "email" in result.fields
+                        _regPhoneError.value = "phone" in result.fields
+                        _regPasswordError.value = "password" in result.fields
+                        _showRegisterErrorBanner.value = true
+                    }
+                }
+                _isLoading.value = false
+            }
         }
     }
 }
