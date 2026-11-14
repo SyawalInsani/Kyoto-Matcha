@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kyotomatcha.util.CurrencyUtil
 import com.example.kyotomatcha.ui.components.BottomNavItem
 import com.example.kyotomatcha.ui.components.OmochaLogo
 import com.example.kyotomatcha.ui.theme.BackgroundCream
@@ -39,6 +41,7 @@ fun OrderScreen(
     onNavigateToSummary: () -> Unit,
     onNavigateToList: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onInventoryClick: () -> Unit,
     viewModel: OrderViewModel = viewModel()
 ) {
     val selectedSource by viewModel.selectedSource.collectAsState()
@@ -48,8 +51,8 @@ fun OrderScreen(
     val cart by viewModel.cart.collectAsState()
     val scrollState = rememberScrollState()
 
-    val totalItems = viewModel.getTotalItems()
-    val totalPrice = viewModel.getTotalPrice()
+    val totalItems = cart.values.sumOf { it.quantity }
+    val totalPrice = cart.values.sumOf { it.menuItem.price * it.quantity }
 
     val filteredItems = menuItems.filter { item ->
         item.category.equals(selectedCategory, ignoreCase = true) &&
@@ -89,7 +92,7 @@ fun OrderScreen(
                                     tint = White
                                 )
                                 Text(
-                                    text = "Lihat Pesanan • $totalItems item • Rp$totalPrice",
+                                    text = "Lihat Pesanan • $totalItems item • ${CurrencyUtil.formatRupiah(totalPrice)}",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = White
@@ -116,7 +119,7 @@ fun OrderScreen(
                         BottomNavItem(label = "Beranda", icon = Icons.Filled.Home, selected = false, onClick = onNavigateHome)
                         BottomNavItem(label = "Absen", icon = Icons.AutoMirrored.Filled.Assignment, selected = false, onClick = onNavigateToAbsen)
                         BottomNavItem(label = "Pesanan", icon = Icons.Filled.ShoppingBag, selected = true)
-                        BottomNavItem(label = "Inventoris", icon = Icons.Filled.Inventory2, selected = false)
+                        BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false, onClick = onInventoryClick)
                         BottomNavItem(label = "Profil", icon = Icons.Filled.Person, selected = false, onClick = onNavigateToProfile)
                     }
                 }
@@ -151,7 +154,7 @@ fun OrderScreen(
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "${viewModel.userName} • Kyoto Matcha",
+                            text = "${viewModel.userName} • Kyoto-Matcha",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -178,38 +181,40 @@ fun OrderScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Source Selector Tabs (Offline, Shopee, Gojek, Grab)
+            // Source Selector Section
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 color = White,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2DDD0))
+                shadowElevation = 1.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    listOf("Offline", "Shopee", "Gojek", "Grab").forEach { source ->
-                        val isSelected = selectedSource == source
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) PrimaryDarkGreen else Color.Transparent,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { viewModel.setSelectedSource(source) }
-                        ) {
-                            Box(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                contentAlignment = Alignment.Center
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(text = "Sumber Pesanan", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf("Offline", "Shopee", "Gojek", "Grab").forEach { source ->
+                            val isSelected = selectedSource == source
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) PrimaryDarkGreen else CardBackground,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { viewModel.setSelectedSource(source) }
                             ) {
-                                Text(
-                                    text = source,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) White else PrimaryDarkGreen
-                                )
+                                Box(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = source,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) White else PrimaryDarkGreen
+                                    )
+                                }
                             }
                         }
                     }
@@ -232,7 +237,12 @@ fun OrderScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(text = "🔍", fontSize = 14.sp)
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = "Cari",
+                        modifier = Modifier.size(18.dp),
+                        tint = TextMuted
+                    )
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.setSearchQuery(it) },
@@ -355,7 +365,7 @@ fun MenuItemCard(item: MenuItem, modifier: Modifier = Modifier, onAdd: () -> Uni
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = "Rp${item.price}",
+                text = CurrencyUtil.formatRupiah(item.price),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = PrimaryDarkGreen

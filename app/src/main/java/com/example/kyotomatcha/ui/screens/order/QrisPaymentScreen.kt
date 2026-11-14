@@ -15,6 +15,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.util.CurrencyUtil
 import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.CardBackground
 import com.example.kyotomatcha.ui.theme.MatchaGreen
@@ -25,39 +28,62 @@ import com.example.kyotomatcha.ui.theme.White
 @Composable
 fun QrisPaymentScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToConfirmation: () -> Unit,
     onNavigateToSavedOrder: () -> Unit,
     viewModel: OrderViewModel = viewModel()
 ) {
-    val total = viewModel.getTotalPrice()
+    val orders by viewModel.orders.collectAsState()
+    val latestOrder = orders.firstOrNull()
+    val total = latestOrder?.total ?: viewModel.getTotalPrice()
+    val orderId = latestOrder?.id ?: "KM-261103-038"
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val userName = sessionManager.getUserName()
     val scrollState = rememberScrollState()
 
     Scaffold(
         bottomBar = {
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding(),
                 color = White,
                 shadowElevation = 12.dp
             ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .clickable { onNavigateToSavedOrder() },
-                    shape = RoundedCornerShape(24.dp),
-                    color = MatchaGreen,
-                    shadowElevation = 6.dp
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Box(
+                    Button(
+                        onClick = onNavigateToConfirmation,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center
+                            .height(52.dp),
+                        shape = RoundedCornerShape(26.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MatchaGreen)
                     ) {
                         Text(
-                            text = "Selesai",
+                            text = "Konfirmasi Pembayaran",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = White
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = onNavigateToSavedOrder,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(26.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MatchaGreen),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MatchaGreen)
+                    ) {
+                        Text(
+                            text = "Simpan (Menunggu Bayar)",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MatchaGreen
                         )
                     }
                 }
@@ -93,7 +119,7 @@ fun QrisPaymentScreen(
                         color = PrimaryDarkGreen
                     )
                     Text(
-                        text = "KM-261103-038 • Offline • Salsa",
+                        text = "$orderId • Offline • $userName",
                         fontSize = 11.sp,
                         color = TextMuted
                     )
@@ -117,7 +143,7 @@ fun QrisPaymentScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "Total", fontSize = 14.sp, color = TextMuted)
-                    Text(text = "Rp$total", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                    Text(text = CurrencyUtil.formatRupiah(total), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                 }
             }
 
@@ -135,7 +161,7 @@ fun QrisPaymentScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "KYOTO MATCHA • QRIS",
+                        text = "KYOTO-MATCHA • QRIS",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryDarkGreen
@@ -183,7 +209,7 @@ fun QrisPaymentScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Rp$total",
+                        text = CurrencyUtil.formatRupiah(total),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryDarkGreen

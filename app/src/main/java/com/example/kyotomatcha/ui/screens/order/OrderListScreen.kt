@@ -20,6 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.util.DateUtil
+import com.example.kyotomatcha.util.CurrencyUtil
 import com.example.kyotomatcha.ui.components.BottomNavItem
 import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.MatchaGreen
@@ -35,9 +39,16 @@ fun OrderListScreen(
     onNavigateToAbsen: () -> Unit,
     onNavigateToOrder: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onInventoryClick: () -> Unit,
     viewModel: OrderViewModel = viewModel()
 ) {
     val orders by viewModel.orders.collectAsState()
+    val waitingCount = orders.count { it.status.equals("Menunggu bayar", ignoreCase = true) }
+    val totalSales = orders.filter { !it.status.equals("Batal", ignoreCase = true) }.sumOf { it.total }
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val userName = sessionManager.getUserName()
+    val currentDate = remember { DateUtil.getCurrentDateFormatted() }
     val selectedTab by viewModel.orderListTab.collectAsState()
     val scrollState = rememberScrollState()
 
@@ -66,7 +77,7 @@ fun OrderListScreen(
                     BottomNavItem(label = "Beranda", icon = Icons.Filled.Home, selected = false, onClick = onNavigateHome)
                     BottomNavItem(label = "Absen", icon = Icons.Filled.DateRange, selected = false, onClick = onNavigateToAbsen)
                     BottomNavItem(label = "Pesanan", icon = Icons.Filled.ShoppingBag, selected = true, onClick = onNavigateToOrder)
-                    BottomNavItem(label = "Inventoris", icon = Icons.Filled.Inventory2, selected = false)
+                    BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false, onClick = onInventoryClick)
                     BottomNavItem(label = "Profil", icon = Icons.Filled.Person, selected = false, onClick = onNavigateToProfile)
                 }
             }
@@ -96,7 +107,7 @@ fun OrderListScreen(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Salsa • Kyoto Matcha, 3 Nov 2026",
+                        text = "$userName • Kyoto-Matcha, $currentDate",
                         fontSize = 11.sp,
                         color = TextMuted
                     )
@@ -126,7 +137,7 @@ fun OrderListScreen(
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(text = "Menunggu bayar", fontSize = 11.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "2", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                        Text(text = waitingCount.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                     }
                 }
 
@@ -150,7 +161,7 @@ fun OrderListScreen(
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(text = "Penjualan", fontSize = 11.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "Rp758.020", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                        Text(text = CurrencyUtil.formatRupiah(totalSales), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                     }
                 }
             }
@@ -259,7 +270,7 @@ fun OrderCard(order: OrderModel, onViewDetail: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Rp${order.total}",
+                    text = CurrencyUtil.formatRupiah(order.total),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryDarkGreen

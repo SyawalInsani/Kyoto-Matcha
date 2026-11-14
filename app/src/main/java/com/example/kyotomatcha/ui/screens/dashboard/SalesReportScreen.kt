@@ -38,6 +38,7 @@ fun SalesReportScreen(
     onNavigateToAbsen: () -> Unit,
     onNavigateToOrder: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onInventoryClick: () -> Unit,
     viewModel: SalesReportViewModel = viewModel()
 ) {
     val selectedTab by viewModel.selectedTab.collectAsState()
@@ -65,7 +66,7 @@ fun SalesReportScreen(
                     BottomNavItem(label = "Beranda", icon = Icons.Filled.Home, selected = true, onClick = onNavigateBack)
                     BottomNavItem(label = "Absen", icon = Icons.Filled.DateRange, selected = false, onClick = onNavigateToAbsen)
                     BottomNavItem(label = "Pesanan", icon = Icons.Filled.ShoppingBag, selected = false, onClick = onNavigateToOrder)
-                    BottomNavItem(label = "Inventoris", icon = Icons.Filled.Inventory2, selected = false)
+                    BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false, onClick = onInventoryClick)
                     BottomNavItem(label = "Profil", icon = Icons.Filled.Person, selected = false, onClick = onNavigateToProfile)
                 }
             }
@@ -105,7 +106,7 @@ fun SalesReportScreen(
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "Kyoto Matcha • 3 Nov 2026",
+                            text = "Kyoto-Matcha • 3 Nov 2026",
                             fontSize = 11.sp,
                             color = TextMuted
                         )

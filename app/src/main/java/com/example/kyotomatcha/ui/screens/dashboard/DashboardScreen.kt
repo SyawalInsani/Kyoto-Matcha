@@ -47,9 +47,13 @@ fun DashboardScreen(
     onAbsenClick: () -> Unit,
     onOrderClick: () -> Unit,
     onProfileClick: () -> Unit,
+    onInventoryClick: () -> Unit,
+    onExpenseClick: () -> Unit,
     viewModel: DashboardViewModel = viewModel()
 ) {
     val userName by viewModel.userName.collectAsState()
+    val userRole by viewModel.userRole.collectAsState()
+    val currentDate by viewModel.currentDate.collectAsState()
     val selectedBranch by viewModel.selectedBranch.collectAsState()
     val isExpanded by viewModel.isDropdownExpanded.collectAsState()
     val branches = viewModel.branches
@@ -75,7 +79,7 @@ fun DashboardScreen(
                     BottomNavItem(label = "Beranda", icon = Icons.Filled.Home, selected = true)
                     BottomNavItem(label = "Absen", icon = Icons.AutoMirrored.Filled.Assignment, selected = false, onClick = onAbsenClick)
                     BottomNavItem(label = "Pesanan", icon = Icons.Filled.ShoppingBag, selected = false, onClick = onOrderClick)
-                    BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false)
+                    BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false, onClick = onInventoryClick)
                     BottomNavItem(label = "Profil", icon = Icons.Filled.Person, selected = false, onClick = onProfileClick)
                 }
             }
@@ -103,13 +107,13 @@ fun DashboardScreen(
                     OmochaLogo(size = 32.dp)
                     Column {
                         Text(
-                            text = "Kyoto Matcha",
+                            text = "Kyoto-Matcha",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "Pemilik • 1 cabang",
+                            text = "$userRole • 1 cabang",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -156,7 +160,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Pemilik • 3 Nov 2026",
+                            text = "$userRole • $currentDate",
                             fontSize = 12.sp,
                             color = TextMuted
                         )
@@ -363,9 +367,9 @@ fun DashboardScreen(
                 ) {
                     QuickActionButton(label = "Absen", icon = Icons.Filled.LocationOn, onClick = onAbsenClick, modifier = Modifier.weight(1f))
                     QuickActionButton(label = "Catat\nPesanan", icon = Icons.Filled.Add, onClick = onOrderClick, modifier = Modifier.weight(1f))
-                    QuickActionButton(label = "Inventaris", icon = Icons.Filled.Inventory2, modifier = Modifier.weight(1f))
+                    QuickActionButton(label = "Inventaris", icon = Icons.Filled.Inventory2, onClick = onInventoryClick, modifier = Modifier.weight(1f))
                     QuickActionButton(label = "Laporan", icon = Icons.Filled.BarChart, onClick = onReportClick, modifier = Modifier.weight(1f))
-                    QuickActionButton(label = "Pengeluaran", icon = Icons.AutoMirrored.Filled.TrendingUp, modifier = Modifier.weight(1f))
+                    QuickActionButton(label = "Pengeluaran", icon = Icons.AutoMirrored.Filled.TrendingUp, onClick = onExpenseClick, modifier = Modifier.weight(1f))
                 }
             }
 

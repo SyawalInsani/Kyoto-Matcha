@@ -19,12 +19,12 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun SplashScreen(
-    onTimeout: () -> Unit,
+    onNavigate: (String) -> Unit,
     viewModel: SplashViewModel = viewModel()
 ) {
     LaunchedEffect(Unit) {
-        viewModel.navigateToNext.collectLatest {
-            onTimeout()
+        viewModel.navigateToNext.collectLatest { route ->
+            onNavigate(route)
         }
     }
 

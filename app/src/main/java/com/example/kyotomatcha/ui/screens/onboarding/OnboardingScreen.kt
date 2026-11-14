@@ -84,13 +84,21 @@ fun OnboardingScreen(
                     )
                 }
 
-                Text(
-                    text = "Lewati",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = PrimaryDarkGreen,
-                    modifier = Modifier.clickable { onFinished() }
-                )
+                val isLastPage = currentIndex == pages.size - 1
+                if (!isLastPage) {
+                    Text(
+                        text = "Lewati",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PrimaryDarkGreen,
+                        modifier = Modifier.clickable { 
+                            viewModel.completeOnboarding()
+                            onFinished() 
+                        }
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(40.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

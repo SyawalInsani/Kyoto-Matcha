@@ -14,6 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.util.DateUtil
+import com.example.kyotomatcha.util.CurrencyUtil
 import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.MatchaGreen
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
@@ -24,9 +28,24 @@ import com.example.kyotomatcha.ui.theme.White
 fun SavedOrderScreen(
     onNavigateNewOrder: () -> Unit,
     onNavigateHome: () -> Unit,
+    onNavigateToList: () -> Unit,
     viewModel: OrderViewModel = viewModel()
 ) {
-    val total = viewModel.getTotalPrice()
+    val orders by viewModel.orders.collectAsState()
+    val latestOrder = orders.firstOrNull()
+    val currentSelectedSource by viewModel.selectedSource.collectAsState()
+    val selectedSource = latestOrder?.source ?: currentSelectedSource
+    val isOffline = selectedSource.equals("Offline", ignoreCase = true)
+    val orderStatus = if (isOffline) "Menunggu bayar" else "Diproses"
+    val orderMessage = if (isOffline) "Bukti bayar belum diterima." else "Pesanan online sudah lunas dari platform."
+    val total = latestOrder?.total ?: viewModel.getTotalPrice()
+    val orderItems = latestOrder?.items?.takeIf { it.isNotEmpty() } ?: viewModel.cart.collectAsState().value.values.toList()
+    val orderId = latestOrder?.id ?: "KM-261103-038"
+    val orderTime = latestOrder?.time ?: "09:40"
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val userName = sessionManager.getUserName()
+    val currentDate = remember { DateUtil.getCurrentDateFormatted() }
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -60,7 +79,7 @@ fun SavedOrderScreen(
                         color = PrimaryDarkGreen
                     )
                     Text(
-                        text = "KM-261103-038 • 3 Nov 2026, 09:40",
+                        text = "$orderId • $currentDate, $orderTime",
                         fontSize = 11.sp,
                         color = TextMuted
                     )
@@ -75,7 +94,7 @@ fun SavedOrderScreen(
                 color = Color(0xFFFEF3C7)
             ) {
                 Text(
-                    text = "Offline",
+                    text = selectedSource,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
@@ -86,7 +105,7 @@ fun SavedOrderScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Menunggu bayar",
+                text = orderStatus,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = PrimaryDarkGreen
@@ -113,9 +132,13 @@ fun SavedOrderScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    DetailItemRow(name = "2 × Matcha Latte", amount = "Rp50.000")
-                    Spacer(modifier = Modifier.height(10.dp))
-                    DetailItemRow(name = "1 × Strawberry Matcha", amount = "Rp30.000")
+                    orderItems.forEach { cartItem ->
+                        DetailItemRow(
+                            name = "${cartItem.quantity} × ${cartItem.menuItem.name}",
+                            amount = CurrencyUtil.formatRupiah(cartItem.menuItem.price * cartItem.quantity)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
                     HorizontalDivider(color = Color(0xFFF0EFEA))
@@ -126,7 +149,7 @@ fun SavedOrderScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Total", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
-                        Text(text = "Rp$total", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                        Text(text = CurrencyUtil.formatRupiah(total), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                     }
                 }
             }
@@ -148,7 +171,7 @@ fun SavedOrderScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Sumber", fontSize = 13.sp, color = TextMuted)
-                        Text(text = "Offline", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryDarkGreen)
+                        Text(text = selectedSource, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryDarkGreen)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Row(
@@ -156,7 +179,7 @@ fun SavedOrderScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Kasir / Cabang", fontSize = 13.sp, color = TextMuted)
-                        Text(text = "Salsa • Kyoto Matcha", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryDarkGreen)
+                        Text(text = "$userName • Kyoto-Matcha", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryDarkGreen)
                     }
                 }
             }
@@ -184,7 +207,7 @@ fun SavedOrderScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Bukti bayar belum diterima.",
+                            text = orderMessage,
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -209,7 +232,7 @@ fun SavedOrderScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = { onNavigateHome() },
+                onClick = { onNavigateToList() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

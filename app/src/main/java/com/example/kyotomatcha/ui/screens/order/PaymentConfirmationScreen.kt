@@ -13,6 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import com.example.kyotomatcha.data.local.SessionManager
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kyotomatcha.util.CurrencyUtil
 import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.CardBackground
 import com.example.kyotomatcha.ui.theme.MatchaGreen
@@ -23,9 +27,18 @@ import com.example.kyotomatcha.ui.theme.White
 @Composable
 fun PaymentConfirmationScreen(
     onNavigateBack: () -> Unit,
-    onConfirmSuccess: () -> Unit
+    onConfirmSuccess: () -> Unit,
+    viewModel: OrderViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
+    val orders by viewModel.orders.collectAsState()
+    val latestOrder = orders.firstOrNull()
+    val total = latestOrder?.total ?: viewModel.getTotalPrice()
+    val orderId = latestOrder?.id ?: "KM-261103-038"
+    val selectedSource by viewModel.selectedSource.collectAsState()
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val userName = sessionManager.getUserName()
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("Nominal bukti tidak sesuai dengan total pesanan.") }
 
@@ -57,7 +70,13 @@ fun PaymentConfirmationScreen(
                     }
 
                     Button(
-                        onClick = { onConfirmSuccess() },
+                        onClick = {
+                            val latestOrderId = viewModel.orders.value.firstOrNull()?.id
+                            if (latestOrderId != null) {
+                                viewModel.updateOrderStatus(latestOrderId, "Diproses")
+                            }
+                            onConfirmSuccess()
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .height(52.dp),
@@ -99,7 +118,7 @@ fun PaymentConfirmationScreen(
                         color = PrimaryDarkGreen
                     )
                     Text(
-                        text = "Kyoto Matcha Senopati • Salsa",
+                        text = "Kyoto-Matcha Senopati • $userName",
                         fontSize = 11.sp,
                         color = TextMuted
                     )
@@ -125,9 +144,9 @@ fun PaymentConfirmationScreen(
                     Column {
                         Text(text = "Total pesanan", fontSize = 13.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "KM-261103-038 • Offline (QRIS)", fontSize = 11.sp, color = TextMuted)
+                        Text(text = "$orderId • $selectedSource (QRIS)", fontSize = 11.sp, color = TextMuted)
                     }
-                    Text(text = "Rp80.000", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                    Text(text = CurrencyUtil.formatRupiah(total), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                 }
             }
 
@@ -166,7 +185,7 @@ fun PaymentConfirmationScreen(
                         ) {
                             Text(text = "Contoh bukti bayar", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(text = "Rp80.000", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                            Text(text = CurrencyUtil.formatRupiah(total), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(text = "03 Nov 2026 • 09:42", fontSize = 11.sp, color = TextMuted)
                             Spacer(modifier = Modifier.height(2.dp))
@@ -215,7 +234,7 @@ fun PaymentConfirmationScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    ConfirmationInfoRow(label = "Nominal", value = "Rp80.000")
+                    ConfirmationInfoRow(label = "Nominal", value = CurrencyUtil.formatRupiah(total))
                     Spacer(modifier = Modifier.height(8.dp))
                     ConfirmationInfoRow(label = "Waktu bayar", value = "09:42")
                     Spacer(modifier = Modifier.height(8.dp))
@@ -247,7 +266,7 @@ fun PaymentConfirmationScreen(
                 text = {
                     Column {
                         Text(
-                            text = "Bukti Rp60.000 tidak sesuai dengan total pesanan Rp80.000.",
+                            text = "Bukti pembayaran tidak sesuai dengan total pesanan ${CurrencyUtil.formatRupiah(total)}.",
                             fontSize = 13.sp,
                             color = TextMuted
                         )
@@ -264,7 +283,14 @@ fun PaymentConfirmationScreen(
                 },
                 confirmButton = {
                     Button(
-                        onClick = { showRejectDialog = false; onNavigateBack() },
+                        onClick = {
+                            val latestOrderId = viewModel.orders.value.firstOrNull()?.id
+                            if (latestOrderId != null) {
+                                viewModel.updateOrderStatus(latestOrderId, "Batal")
+                            }
+                            showRejectDialog = false
+                            onNavigateBack()
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC53030)),
                         shape = RoundedCornerShape(16.dp)
                     ) {

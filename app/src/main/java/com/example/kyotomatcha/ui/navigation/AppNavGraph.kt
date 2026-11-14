@@ -17,6 +17,12 @@ import com.example.kyotomatcha.ui.screens.dashboard.BusinessSummaryScreen
 import com.example.kyotomatcha.ui.screens.dashboard.DashboardScreen
 import com.example.kyotomatcha.ui.screens.dashboard.NotificationScreen
 import com.example.kyotomatcha.ui.screens.dashboard.SalesReportScreen
+import com.example.kyotomatcha.ui.screens.expense.AddExpenseScreen
+import com.example.kyotomatcha.ui.screens.expense.ExpenseScreen
+import com.example.kyotomatcha.ui.screens.inventory.InventoryHistoryScreen
+import com.example.kyotomatcha.ui.screens.inventory.InventoryScreen
+import com.example.kyotomatcha.ui.screens.inventory.StockInScreen
+import com.example.kyotomatcha.ui.screens.inventory.StockOutScreen
 import com.example.kyotomatcha.ui.screens.onboarding.OnboardingScreen
 import com.example.kyotomatcha.ui.screens.order.OrderDetailScreen
 import com.example.kyotomatcha.ui.screens.order.OrderListScreen
@@ -52,8 +58,8 @@ fun AppNavGraph() {
     NavHost(navController = navController, startDestination = Routes.Splash.route) {
         composable(Routes.Splash.route) {
             SplashScreen(
-                onTimeout = {
-                    navController.navigate(Routes.Onboarding.route) {
+                onNavigate = { route ->
+                    navController.navigate(route) {
                         popUpTo(Routes.Splash.route) { inclusive = true }
                     }
                 }
@@ -142,6 +148,12 @@ fun AppNavGraph() {
                 },
                 onProfileClick = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
+                },
+                onExpenseClick = {
+                    navController.navigate(Routes.Expense.route)
                 }
             )
         }
@@ -161,6 +173,9 @@ fun AppNavGraph() {
                 },
                 onNavigateToProfile = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -177,6 +192,9 @@ fun AppNavGraph() {
                 },
                 onNavigateToProfile = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -203,6 +221,9 @@ fun AppNavGraph() {
                 },
                 onNavigateToProfile = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -222,6 +243,9 @@ fun AppNavGraph() {
                 },
                 onNavigateToProfile = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -241,6 +265,9 @@ fun AppNavGraph() {
                 },
                 onNavigateToProfile = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -252,6 +279,11 @@ fun AppNavGraph() {
                 onNavigateToQris = {
                     navController.navigate(Routes.QrisPayment.route)
                 },
+                onNavigateToSavedOrder = {
+                    navController.navigate(Routes.OrderList.route) {
+                        popUpTo(Routes.Order.route) { inclusive = true }
+                    }
+                },
                 onNavigateHome = {
                     navController.navigateToTab(Routes.Dashboard.route)
                 },
@@ -260,6 +292,9 @@ fun AppNavGraph() {
                 },
                 onNavigateToProfile = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -268,9 +303,12 @@ fun AppNavGraph() {
                 onNavigateBack = {
                     navController.popBackStack()
                 },
+                onNavigateToConfirmation = {
+                    navController.navigate(Routes.PaymentConfirmation.route)
+                },
                 onNavigateToSavedOrder = {
-                    navController.navigate(Routes.SavedOrder.route) {
-                        popUpTo(Routes.Order.route) { inclusive = false }
+                    navController.navigate(Routes.OrderList.route) {
+                        popUpTo(Routes.Order.route) { inclusive = true }
                     }
                 }
             )
@@ -284,6 +322,11 @@ fun AppNavGraph() {
                 },
                 onNavigateHome = {
                     navController.navigateToTab(Routes.Dashboard.route)
+                },
+                onNavigateToList = {
+                    navController.navigate(Routes.OrderList.route) {
+                        popUpTo(Routes.Dashboard.route) { inclusive = false }
+                    }
                 }
             )
         }
@@ -306,6 +349,9 @@ fun AppNavGraph() {
                 },
                 onNavigateToProfile = {
                     navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -327,8 +373,8 @@ fun AppNavGraph() {
                     navController.popBackStack()
                 },
                 onConfirmSuccess = {
-                    navController.navigate(Routes.SavedOrder.route) {
-                        popUpTo(Routes.Order.route) { inclusive = false }
+                    navController.navigate(Routes.OrderList.route) {
+                        popUpTo(Routes.Order.route) { inclusive = true }
                     }
                 }
             )
@@ -364,8 +410,11 @@ fun AppNavGraph() {
                 },
                 onLogout = {
                     navController.navigate(Routes.Welcome.route) {
-                        popUpTo(Routes.Dashboard.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
                 }
             )
         }
@@ -419,6 +468,90 @@ fun AppNavGraph() {
         }
         composable(Routes.About.route) {
             AboutScreen()
+        }
+        composable(Routes.Inventory.route) {
+            InventoryScreen(
+                onNavigateHome = {
+                    navController.navigateToTab(Routes.Dashboard.route)
+                },
+                onNavigateToAbsen = {
+                    navController.navigateToTab(Routes.Absen.route)
+                },
+                onNavigateToOrder = {
+                    navController.navigateToTab(Routes.Order.route)
+                },
+                onNavigateToProfile = {
+                    navController.navigateToTab(Routes.Profile.route)
+                },
+                onNavigateToStockIn = {
+                    navController.navigate(Routes.StockIn.route)
+                },
+                onNavigateToStockOut = {
+                    navController.navigate(Routes.StockOut.route)
+                },
+                onNavigateToHistory = {
+                    navController.navigate(Routes.InventoryHistory.route)
+                }
+            )
+        }
+        composable(Routes.InventoryHistory.route) {
+            InventoryHistoryScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        composable(Routes.StockIn.route) {
+            StockInScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToHistory = {
+                    navController.navigate(Routes.InventoryHistory.route)
+                }
+            )
+        }
+        composable(Routes.StockOut.route) {
+            StockOutScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToHistory = {
+                    navController.navigate(Routes.InventoryHistory.route)
+                }
+            )
+        }
+        composable(Routes.Expense.route) {
+            ExpenseScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToAddExpense = {
+                    navController.navigate(Routes.AddExpense.route)
+                },
+                onNavigateHome = {
+                    navController.navigateToTab(Routes.Dashboard.route)
+                },
+                onNavigateToAbsen = {
+                    navController.navigateToTab(Routes.Absen.route)
+                },
+                onNavigateToOrder = {
+                    navController.navigateToTab(Routes.Order.route)
+                },
+                onNavigateToProfile = {
+                    navController.navigateToTab(Routes.Profile.route)
+                },
+                onInventoryClick = {
+                    navController.navigateToTab(Routes.Inventory.route)
+                }
+            )
+        }
+        composable(Routes.AddExpense.route) {
+            AddExpenseScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

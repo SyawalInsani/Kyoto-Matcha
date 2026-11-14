@@ -44,10 +44,12 @@ fun ProfileScreen(
     onNavigateToPrivacy: () -> Unit,
     onNavigateToTerms: () -> Unit,
     onLogout: () -> Unit,
+    onInventoryClick: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
     val name by viewModel.name.collectAsState()
     val email by viewModel.email.collectAsState()
+    val role by viewModel.role.collectAsState()
     val scrollState = rememberScrollState()
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -70,7 +72,7 @@ fun ProfileScreen(
                     BottomNavItem(label = "Beranda", icon = Icons.Filled.Home, selected = false, onClick = onNavigateHome)
                     BottomNavItem(label = "Absen", icon = Icons.Filled.DateRange, selected = false, onClick = onNavigateToAbsen)
                     BottomNavItem(label = "Pesanan", icon = Icons.Filled.ShoppingBag, selected = false, onClick = onNavigateToOrder)
-                    BottomNavItem(label = "Inventoris", icon = Icons.Filled.Inventory2, selected = false)
+                    BottomNavItem(label = "Inventaris", icon = Icons.Filled.Inventory2, selected = false, onClick = onInventoryClick)
                     BottomNavItem(label = "Profil", icon = Icons.Filled.Person, selected = true)
                 }
             }
@@ -165,7 +167,7 @@ fun ProfileScreen(
                                 color = Color(0xFFE6F4EA)
                             ) {
                                 Text(
-                                    text = "Kasir",
+                                    text = role,
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
@@ -181,7 +183,7 @@ fun ProfileScreen(
 
                     ProfileInfoRow(label = "ID karyawan", value = "KM-002")
                     Spacer(modifier = Modifier.height(10.dp))
-                    ProfileInfoRow(label = "Cabang", value = "Kyoto Matcha")
+                    ProfileInfoRow(label = "Cabang", value = "Kyoto-Matcha")
                 }
             }
 
