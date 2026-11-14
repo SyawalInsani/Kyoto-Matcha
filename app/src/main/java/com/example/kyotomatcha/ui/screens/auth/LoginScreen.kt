@@ -37,6 +37,8 @@ fun LoginScreen(
     val password by viewModel.loginPassword.collectAsState()
     val rememberMe by viewModel.rememberMe.collectAsState()
     val showBanner by viewModel.showLoginErrorBanner.collectAsState()
+    val serverError by viewModel.serverError.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val emailError by viewModel.emailError.collectAsState()
     val passwordError by viewModel.passwordError.collectAsState()
     val emailErrorText by viewModel.emailErrorText.collectAsState()
@@ -105,7 +107,7 @@ fun LoginScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Lengkapi email dan kata sandi untuk masuk.",
+                                text = serverError.ifEmpty { "Lengkapi email dan kata sandi untuk masuk." },
                                 fontSize = 12.sp,
                                 color = Color(0xFFC53030)
                             )
@@ -214,6 +216,7 @@ fun LoginScreen(
                 // Login Button
                 Button(
                     onClick = { viewModel.validateAndLogin(onSuccess = onLoginSuccess) },
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),

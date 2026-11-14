@@ -43,6 +43,8 @@ fun RegisterScreen(
     val agreeTerms by viewModel.agreeTerms.collectAsState()
 
     val showBanner by viewModel.showRegisterErrorBanner.collectAsState()
+    val serverError by viewModel.serverError.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val nameError by viewModel.regNameError.collectAsState()
     val emailError by viewModel.regEmailError.collectAsState()
     val phoneError by viewModel.regPhoneError.collectAsState()
@@ -120,7 +122,7 @@ fun RegisterScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Lengkapi semua form pendaftaran dengan benar.",
+                            text = serverError.ifEmpty { "Lengkapi semua form pendaftaran dengan benar." },
                             fontSize = 12.sp,
                             color = Color(0xFFC53030)
                         )
@@ -291,6 +293,7 @@ fun RegisterScreen(
             // Register Button
             Button(
                 onClick = { viewModel.validateAndRegister(onSuccess = onRegisterSuccess) },
+                enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

@@ -6,24 +6,38 @@ import android.content.SharedPreferences
 class SessionManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("omacha_prefs", Context.MODE_PRIVATE)
 
-    fun saveUser(name: String, email: String, pass: String, role: String = "Kasir") {
+    // Dipanggil setelah login ke server berhasil. Kata sandi sengaja tidak disimpan.
+    // Peran dari server ("kasir") disimpan dengan huruf awal besar ("Kasir") karena dipakai untuk tampilan.
+    fun saveSession(token: String, name: String, email: String, role: String, employeeCode: String?) {
         prefs.edit().apply {
+            putString("KEY_TOKEN", token)
             putString("KEY_NAME", name)
             putString("KEY_EMAIL", email)
-            putString("KEY_PASSWORD", pass)
-            putString("KEY_ROLE", role)
+            putString("KEY_ROLE", role.replaceFirstChar { it.uppercase() })
+            putString("KEY_EMPLOYEE_CODE", employeeCode)
             putBoolean("KEY_IS_LOGGED_IN", true)
             apply()
         }
     }
 
+    // Ubah profil: baru tersimpan di HP, belum dikirim ke server.
+    fun updateProfile(name: String, email: String) {
+        prefs.edit().putString("KEY_NAME", name).putString("KEY_EMAIL", email).apply()
+    }
+
     fun setLoggedIn(loggedIn: Boolean) {
-        prefs.edit().putBoolean("KEY_IS_LOGGED_IN", loggedIn).apply()
+        prefs.edit().apply {
+            putBoolean("KEY_IS_LOGGED_IN", loggedIn)
+            if (!loggedIn) remove("KEY_TOKEN")
+            apply()
+        }
     }
 
     fun isLoggedIn(): Boolean {
         return prefs.getBoolean("KEY_IS_LOGGED_IN", false)
     }
+
+    fun getToken(): String? = prefs.getString("KEY_TOKEN", null)
 
     fun getUserName(): String {
         return prefs.getString("KEY_NAME", "Salsa") ?: "Salsa"
@@ -31,10 +45,6 @@ class SessionManager(context: Context) {
 
     fun getUserEmail(): String {
         return prefs.getString("KEY_EMAIL", "salsa@kyotomatcha.id") ?: "salsa@kyotomatcha.id"
-    }
-
-    fun getSavedPassword(): String {
-        return prefs.getString("KEY_PASSWORD", "") ?: ""
     }
 
     fun getUserRole(): String {

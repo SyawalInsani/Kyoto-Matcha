@@ -38,7 +38,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         _name.value = newName
         _email.value = newEmail
         _phone.value = newPhone
-        sessionManager.saveUser(newName, newEmail, sessionManager.getSavedPassword(), sessionManager.getUserRole())
+        sessionManager.updateProfile(newName, newEmail)
     }
 
     fun toggleReminderAbsen(value: Boolean) { _reminderAbsen.value = value }
