@@ -20,6 +20,8 @@ import com.example.kyotomatcha.ui.screens.dashboard.SalesReportScreen
 import com.example.kyotomatcha.ui.screens.expense.AddExpenseScreen
 import com.example.kyotomatcha.ui.screens.expense.ExpenseScreen
 import com.example.kyotomatcha.ui.screens.inventory.InventoryHistoryScreen
+import com.example.kyotomatcha.ui.screens.leave.ApprovalsScreen
+import com.example.kyotomatcha.ui.screens.leave.LeaveRequestScreen
 import com.example.kyotomatcha.ui.screens.inventory.InventoryScreen
 import com.example.kyotomatcha.ui.screens.inventory.StockInScreen
 import com.example.kyotomatcha.ui.screens.inventory.StockOutScreen
@@ -408,6 +410,12 @@ fun AppNavGraph() {
                 onNavigateToTerms = {
                     navController.navigate(Routes.Terms.route)
                 },
+                onNavigateToLeave = {
+                    navController.navigate(Routes.Leave.route)
+                },
+                onNavigateToApprovals = {
+                    navController.navigate(Routes.Approvals.route)
+                },
                 onLogout = {
                     navController.navigate(Routes.Welcome.route) {
                         popUpTo(0) { inclusive = true }
@@ -417,6 +425,12 @@ fun AppNavGraph() {
                     navController.navigateToTab(Routes.Inventory.route)
                 }
             )
+        }
+        composable(Routes.Leave.route) {
+            LeaveRequestScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(Routes.Approvals.route) {
+            ApprovalsScreen(onNavigateBack = { navController.popBackStack() })
         }
         composable(Routes.EditProfile.route) {
             EditProfileScreen(

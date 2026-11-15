@@ -43,6 +43,8 @@ fun ProfileScreen(
     onNavigateToAbout: () -> Unit,
     onNavigateToPrivacy: () -> Unit,
     onNavigateToTerms: () -> Unit,
+    onNavigateToLeave: () -> Unit,
+    onNavigateToApprovals: () -> Unit,
     onLogout: () -> Unit,
     onInventoryClick: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
@@ -181,7 +183,7 @@ fun ProfileScreen(
                     HorizontalDivider(color = Color(0xFFF0EFEA))
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    ProfileInfoRow(label = "ID karyawan", value = "KM-002")
+                    ProfileInfoRow(label = "ID karyawan", value = com.example.kyotomatcha.data.local.SessionManager(androidx.compose.ui.platform.LocalContext.current).getEmployeeCode())
                     Spacer(modifier = Modifier.height(10.dp))
                     ProfileInfoRow(label = "Cabang", value = "Kyoto-Matcha")
                 }
@@ -199,6 +201,12 @@ fun ProfileScreen(
                 Column(
                     modifier = Modifier.padding(vertical = 8.dp)
                 ) {
+                    // Izin tidak hadir: kasir/karyawan mengajukan, pemilik menyetujui.
+                    if (role.equals("Pemilik", ignoreCase = true)) {
+                        ProfileMenuRow(title = "Persetujuan izin & pendaftar", onClick = onNavigateToApprovals)
+                    } else {
+                        ProfileMenuRow(title = "Ajukan izin tidak hadir", onClick = onNavigateToLeave)
+                    }
                     ProfileMenuRow(title = "Ubah profil", onClick = onNavigateToEditProfile)
                     ProfileMenuRow(title = "Ubah kata sandi", onClick = onNavigateToChangePassword)
                     ProfileMenuRow(title = "Pengaturan notifikasi", onClick = onNavigateToNotifications)

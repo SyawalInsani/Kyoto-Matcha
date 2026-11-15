@@ -157,6 +157,43 @@ data class PayRequest(val method: String)
 
 data class OrderStatusRequest(val status: String, val cancel_reason: String?)
 
+// ---- Izin tidak hadir dan persetujuan ----
+data class StaffDto(val id: Int, val name: String, val role: String)
+
+data class StaffResponse(val data: List<StaffDto>?)
+
+data class LeaveBody(
+    val date: String, // yyyy-MM-dd
+    val shift: String,
+    val reason: String,
+    val covered_by: Int?,
+    val replacement_name: String?
+)
+
+data class LeaveDto(
+    val id: Int,
+    val user_id: Int,
+    val user_name: String?,
+    val date: String,
+    val shift: String,
+    val reason: String,
+    val covered_by: Int?,
+    val covered_by_name: String?,
+    val replacement_name: String?,
+    val status: String, // menunggu, disetujui, ditolak
+    val reject_reason: String?
+)
+
+data class LeaveResponse(val message: String?, val data: LeaveDto?)
+
+data class LeavesResponse(val data: List<LeaveDto>?)
+
+data class RejectBody(val reason: String?)
+
+data class PendingUsersResponse(val data: List<UserDto>?)
+
+data class ApproveUserBody(val role: String)
+
 interface ApiService {
     @POST("login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
@@ -209,4 +246,31 @@ interface ApiService {
 
     @POST("orders/{id}/status")
     suspend fun updateOrderStatus(@Path("id") id: Int, @Body body: OrderStatusRequest): Response<OrderResponse>
+
+    @GET("staff")
+    suspend fun staff(): Response<StaffResponse>
+
+    @POST("leaves")
+    suspend fun submitLeave(@Body body: LeaveBody): Response<LeaveResponse>
+
+    @GET("leaves/mine")
+    suspend fun myLeaves(): Response<LeavesResponse>
+
+    @GET("leaves")
+    suspend fun pendingLeaves(): Response<LeavesResponse>
+
+    @POST("leaves/{id}/approve")
+    suspend fun approveLeave(@Path("id") id: Int): Response<LeaveResponse>
+
+    @POST("leaves/{id}/reject")
+    suspend fun rejectLeave(@Path("id") id: Int, @Body body: RejectBody): Response<LeaveResponse>
+
+    @GET("users/pending")
+    suspend fun pendingUsers(): Response<PendingUsersResponse>
+
+    @POST("users/{id}/approve")
+    suspend fun approveUser(@Path("id") id: Int, @Body body: ApproveUserBody): Response<MessageResponse>
+
+    @POST("users/{id}/reject")
+    suspend fun rejectUser(@Path("id") id: Int): Response<MessageResponse>
 }
