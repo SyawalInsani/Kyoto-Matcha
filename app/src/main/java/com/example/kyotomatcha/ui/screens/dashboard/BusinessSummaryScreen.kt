@@ -31,6 +31,10 @@ import com.example.kyotomatcha.ui.theme.MatchaGreen
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
 import com.example.kyotomatcha.ui.theme.TextMuted
 import com.example.kyotomatcha.ui.theme.White
+import com.example.kyotomatcha.util.CurrencyUtil
+import com.example.kyotomatcha.util.DateUtil
+import com.example.kyotomatcha.util.QuantityUtil
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun BusinessSummaryScreen(
@@ -43,6 +47,10 @@ fun BusinessSummaryScreen(
     viewModel: BusinessSummaryViewModel = viewModel()
 ) {
     val scrollState = rememberScrollState()
+    val dash by viewModel.dashboard.collectAsState()
+    val sales = dash?.sales
+    val stockAlerts = dash?.stock
+    LaunchedEffect(Unit) { viewModel.refresh() }
 
     Scaffold(
         bottomBar = {
@@ -152,7 +160,7 @@ fun BusinessSummaryScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Rp758.020",
+                        text = sales?.let { CurrencyUtil.formatRupiah(it.total) } ?: "-",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryDarkGreen
@@ -161,29 +169,14 @@ fun BusinessSummaryScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "30 pesanan lunas • 30 gelas • 3 Nov 2026",
+                        text = if (dash == null) "Memuat..." else sales?.let { "${it.orders} pesanan lunas • ${it.cups} gelas • ${DateUtil.getCurrentDateFormatted()}" } ?: "Penjualan hanya untuk pemilik dan kasir",
                         fontSize = 12.sp,
                         color = TextMuted
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Bar Chart Simulation
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(110.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        BarChartItem(day = "28", heightFraction = 0.3f, isDark = false)
-                        BarChartItem(day = "29", heightFraction = 0.45f, isDark = false)
-                        BarChartItem(day = "30", heightFraction = 0.38f, isDark = false)
-                        BarChartItem(day = "31", heightFraction = 0.65f, isDark = false)
-                        BarChartItem(day = "01", heightFraction = 0.55f, isDark = false)
-                        BarChartItem(day = "02", heightFraction = 0.75f, isDark = false)
-                        BarChartItem(day = "03", heightFraction = 0.70f, isDark = true)
-                    }
+                    SalesBarChart(dash?.chart.orEmpty())
                 }
             }
 
@@ -221,20 +214,26 @@ fun BusinessSummaryScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    StockItemRow(name = "Matcha Powder", detail = "1,2 kg • Min. 2 kg", status = "Menipis", isWarning = true)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    StockItemRow(name = "Whipped Cream", detail = "0,5 liter • Min. 1 liter", status = "Menipis", isWarning = true)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    StockItemRow(name = "Gelas", detail = "18 pcs • Min. 20 pcs", status = "Menipis", isWarning = true)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    StockItemRow(name = "Matcha Sauce", detail = "0,6 liter • Min. 0,5 liter", status = "Tersedia", isWarning = false)
+                    val alertItems = stockAlerts?.items.orEmpty()
+                    if (alertItems.isEmpty()) {
+                        Text(text = if (stockAlerts == null) "Memuat..." else "Semua stok aman.", fontSize = 13.sp, color = TextMuted)
+                    }
+                    alertItems.forEachIndexed { index, item ->
+                        if (index > 0) Spacer(modifier = Modifier.height(12.dp))
+                        StockItemRow(
+                            name = item.name,
+                            detail = QuantityUtil.withUnit(item.quantity, item.unit),
+                            status = if (item.status == "habis") "Habis" else "Menipis",
+                            isWarning = true
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "2 bahan menipis + Gelas • tidak ada stok habis",
+                text = stockAlerts?.let { "${it.low} menipis • ${it.empty} habis" } ?: "",
                 fontSize = 12.sp,
                 color = TextMuted,
                 modifier = Modifier.padding(horizontal = 4.dp)

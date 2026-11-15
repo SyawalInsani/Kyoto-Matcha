@@ -6,6 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class LoginRequest(val email: String, val password: String)
 
@@ -194,6 +195,59 @@ data class PendingUsersResponse(val data: List<UserDto>?)
 
 data class ApproveUserBody(val role: String)
 
+// ---- Beranda dan laporan ----
+data class SalesSummaryDto(val total: Int, val orders: Int, val cups: Int, val waiting_payment: Int, val cancelled: Int)
+
+data class AttendanceSummaryDto(
+    val expected: Int,
+    val present: Int,
+    val on_time: Int,
+    val late: Int,
+    val on_leave: Int,
+    val absent: Int,
+    val percentage: Int
+)
+
+data class StockAlertItemDto(val name: String, val status: String, val quantity: Double, val unit: String)
+
+data class StockAlertsDto(val low: Int, val empty: Int, val needs_restock: Int, val items: List<StockAlertItemDto>)
+
+// sales = null untuk karyawan (angka penjualan hanya untuk pemilik dan kasir).
+data class DashboardDto(
+    val date: String,
+    val sales: SalesSummaryDto?,
+    val chart: List<ChartDayDto>?,
+    val attendance: AttendanceSummaryDto,
+    val stock: StockAlertsDto
+)
+
+data class DashboardResponse(val data: DashboardDto?)
+
+data class ChartDayDto(val date: String, val total: Int)
+
+data class SourceSalesDto(val key: String, val label: String, val total: Int, val orders: Int)
+
+data class ExpenseTotalDto(val category: String, val label: String, val total: Int)
+
+data class BestSellerDto(val name: String, val qty: Int)
+
+data class BestSellersDto(val top: List<BestSellerDto>, val others: Int)
+
+data class SalesReportDto(
+    val period: String,
+    val from: String,
+    val to: String,
+    val sales: SalesSummaryDto,
+    val chart: List<ChartDayDto>,
+    val by_source: List<SourceSalesDto>,
+    val expenses: List<ExpenseTotalDto>,
+    val total_expenses: Int,
+    val net: Int,
+    val best_sellers: BestSellersDto
+)
+
+data class SalesReportResponse(val data: SalesReportDto?)
+
 interface ApiService {
     @POST("login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
@@ -273,4 +327,10 @@ interface ApiService {
 
     @POST("users/{id}/reject")
     suspend fun rejectUser(@Path("id") id: Int): Response<MessageResponse>
+
+    @GET("dashboard")
+    suspend fun dashboard(): Response<DashboardResponse>
+
+    @GET("reports/sales")
+    suspend fun salesReport(@Query("period") period: String): Response<SalesReportResponse>
 }

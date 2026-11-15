@@ -22,6 +22,14 @@ object DateUtil {
         return sdf.format(Date())
     }
 
+    /** "2026-11-10" -> "10 Nov" */
+    fun isoToShort(iso: String): String {
+        val months = listOf("Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
+        val parts = iso.take(10).split("-")
+        val month = parts.getOrNull(1)?.toIntOrNull()?.let { months.getOrNull(it - 1) } ?: return iso
+        return "${parts[2].toInt()} $month"
+    }
+
     fun getCurrentTimeFormatted(): String {
         val sdf = SimpleDateFormat("HH:mm", localeId)
         return sdf.format(Date())

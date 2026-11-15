@@ -2,11 +2,14 @@ package com.example.kyotomatcha.ui.screens.dashboard
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.data.repository.ReportRepository
 import com.example.kyotomatcha.util.DateUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     private val sessionManager = SessionManager(application)
@@ -28,6 +31,20 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val _isDropdownExpanded = MutableStateFlow(false)
     val isDropdownExpanded: StateFlow<Boolean> = _isDropdownExpanded.asStateFlow()
+
+    // Angka hari ini dari server (penjualan, kehadiran, stok). null sampai pertama kali dimuat.
+    val dashboard = ReportRepository.dashboard
+
+    private val _loadError = MutableStateFlow("")
+    val loadError: StateFlow<String> = _loadError.asStateFlow()
+
+    init {
+        refresh()
+    }
+
+    fun refresh() {
+        viewModelScope.launch { _loadError.value = ReportRepository.refreshDashboard().orEmpty() }
+    }
 
     fun setDropdownExpanded(expanded: Boolean) {
         _isDropdownExpanded.value = expanded

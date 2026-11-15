@@ -30,6 +30,8 @@ import com.example.kyotomatcha.ui.theme.MatchaGreen
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
 import com.example.kyotomatcha.ui.theme.TextMuted
 import com.example.kyotomatcha.ui.theme.White
+import com.example.kyotomatcha.util.CurrencyUtil
+import com.example.kyotomatcha.util.DateUtil
 import kotlinx.coroutines.launch
 
 @Composable
@@ -42,6 +44,10 @@ fun SalesReportScreen(
     viewModel: SalesReportViewModel = viewModel()
 ) {
     val selectedTab by viewModel.selectedTab.collectAsState()
+    val report by viewModel.report.collectAsState()
+    val reportError by viewModel.error.collectAsState()
+    val reportLoading by viewModel.isLoading.collectAsState()
+    val sales = report?.sales
     val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -106,7 +112,7 @@ fun SalesReportScreen(
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "Kyoto-Matcha • 3 Nov 2026",
+                            text = "Kyoto-Matcha • ${DateUtil.getCurrentDateFormatted()}",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -142,6 +148,11 @@ fun SalesReportScreen(
                 FilterTab(label = "Bulan", selected = selectedTab == "Bulan") { viewModel.setSelectedTab("Bulan") }
             }
 
+            if (reportError.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = reportError, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFFC53030))
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Dark Green Total Sales Card
@@ -154,20 +165,24 @@ fun SalesReportScreen(
                     modifier = Modifier.padding(20.dp)
                 ) {
                     Text(
-                        text = "Total penjualan hari ini",
+                        text = when (selectedTab) {
+                            "7 hari" -> "Total penjualan 7 hari terakhir"
+                            "Bulan" -> "Total penjualan bulan ini"
+                            else -> "Total penjualan hari ini"
+                        },
                         fontSize = 12.sp,
                         color = Color(0xFFB0C4B1)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Rp758.020",
+                        text = sales?.let { CurrencyUtil.formatRupiah(it.total) } ?: "-",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = White
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "30 pesanan lunas • 30 gelas • 2 belum bayar",
+                        text = if (sales == null) (if (reportLoading) "Memuat..." else "") else "${sales.orders} pesanan lunas • ${sales.cups} gelas • ${sales.waiting_payment} belum bayar",
                         fontSize = 12.sp,
                         color = Color(0xFFB0C4B1)
                     )
@@ -198,7 +213,7 @@ fun SalesReportScreen(
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "28 Okt – 3 Nov",
+                            text = report?.chart?.takeIf { it.isNotEmpty() }?.let { "${DateUtil.isoToShort(it.first().date)} – ${DateUtil.isoToShort(it.last().date)}" } ?: "",
                             fontSize = 12.sp,
                             color = TextMuted
                         )
@@ -206,21 +221,7 @@ fun SalesReportScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(110.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        BarChartItem(day = "28", heightFraction = 0.3f, isDark = false)
-                        BarChartItem(day = "29", heightFraction = 0.45f, isDark = false)
-                        BarChartItem(day = "30", heightFraction = 0.38f, isDark = false)
-                        BarChartItem(day = "31", heightFraction = 0.65f, isDark = false)
-                        BarChartItem(day = "01", heightFraction = 0.55f, isDark = false)
-                        BarChartItem(day = "02", heightFraction = 0.75f, isDark = false)
-                        BarChartItem(day = "03", heightFraction = 0.80f, isDark = true)
-                    }
+                    SalesBarChart(report?.chart.orEmpty())
                 }
             }
 
@@ -245,13 +246,11 @@ fun SalesReportScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    SourceRow(name = "Offline (QRIS)", amount = "Rp60.000", isBold = false)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    SourceRow(name = "Shopee", amount = "Rp147.478", isBold = false)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    SourceRow(name = "Gojek", amount = "Rp343.535", isBold = false)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    SourceRow(name = "Grab", amount = "Rp207.007", isBold = false)
+                    val sources = report?.by_source.orEmpty()
+                    sources.forEachIndexed { index, src ->
+                        if (index > 0) Spacer(modifier = Modifier.height(10.dp))
+                        SourceRow(name = src.label, amount = CurrencyUtil.formatRupiah(src.total), isBold = false)
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(color = Color(0xFFF0EFEA))
@@ -266,17 +265,22 @@ fun SalesReportScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    SourceRow(name = "Uang makan", amount = "Rp30.000", isBold = false)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    SourceRow(name = "Es batu", amount = "Rp17.000", isBold = false)
+                    val expenseRows = report?.expenses.orEmpty()
+                    if (expenseRows.isEmpty()) {
+                        Text(text = "Belum ada pengeluaran tercatat.", fontSize = 13.sp, color = TextMuted)
+                    }
+                    expenseRows.forEachIndexed { index, row ->
+                        if (index > 0) Spacer(modifier = Modifier.height(10.dp))
+                        SourceRow(name = row.label, amount = CurrencyUtil.formatRupiah(row.total), isBold = false)
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(color = Color(0xFFF0EFEA))
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    SourceRow(name = "Total pengeluaran", amount = "Rp47.000", isBold = true)
+                    SourceRow(name = "Total pengeluaran", amount = CurrencyUtil.formatRupiah(report?.total_expenses ?: 0), isBold = true)
                     Spacer(modifier = Modifier.height(12.dp))
-                    SourceRow(name = "Sisa setelah pengeluaran", amount = "Rp711.020", isBold = true, textColor = MatchaGreen)
+                    SourceRow(name = "Sisa setelah pengeluaran", amount = CurrencyUtil.formatRupiah(report?.net ?: 0), isBold = true, textColor = MatchaGreen)
                 }
             }
 
@@ -301,11 +305,18 @@ fun SalesReportScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    BestSellerRow(name = "Matcha Latte", count = "12")
-                    Spacer(modifier = Modifier.height(10.dp))
-                    BestSellerRow(name = "Strawberry Matcha", count = "8")
-                    Spacer(modifier = Modifier.height(10.dp))
-                    BestSellerRow(name = "Lainnya", count = "10")
+                    val best = report?.best_sellers
+                    if (best == null || (best.top.isEmpty() && best.others == 0)) {
+                        Text(text = "Belum ada penjualan pada periode ini.", fontSize = 13.sp, color = TextMuted)
+                    }
+                    best?.top?.forEachIndexed { index, item ->
+                        if (index > 0) Spacer(modifier = Modifier.height(10.dp))
+                        BestSellerRow(name = item.name, count = item.qty.toString())
+                    }
+                    if (best != null && best.others > 0) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        BestSellerRow(name = "Lainnya", count = best.others.toString())
+                    }
                 }
             }
 
