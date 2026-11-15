@@ -44,6 +44,9 @@ fun RegisterScreen(
 
     val showBanner by viewModel.showRegisterErrorBanner.collectAsState()
     val serverError by viewModel.serverError.collectAsState()
+    val emailErrorText by viewModel.regEmailErrorText.collectAsState()
+    val phoneErrorText by viewModel.regPhoneErrorText.collectAsState()
+    val passwordErrorText by viewModel.regPasswordErrorText.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val nameError by viewModel.regNameError.collectAsState()
     val emailError by viewModel.regEmailError.collectAsState()
@@ -174,7 +177,7 @@ fun RegisterScreen(
             )
             if (emailError) {
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Masukkan alamat email yang valid.", fontSize = 11.sp, color = Color(0xFFC53030))
+                Text(text = emailErrorText.ifEmpty { "Masukkan alamat email yang valid." }, fontSize = 11.sp, color = Color(0xFFC53030))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -198,7 +201,7 @@ fun RegisterScreen(
             )
             if (phoneError) {
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Nomor telepon wajib diisi.", fontSize = 11.sp, color = Color(0xFFC53030))
+                Text(text = phoneErrorText.ifEmpty { "Nomor telepon wajib diisi." }, fontSize = 11.sp, color = Color(0xFFC53030))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -233,7 +236,7 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             if (passwordError) {
-                Text(text = "Kata sandi minimal 8 karakter.", fontSize = 11.sp, color = Color(0xFFC53030))
+                Text(text = passwordErrorText.ifEmpty { "Kata sandi minimal 8 karakter." }, fontSize = 11.sp, color = Color(0xFFC53030))
             } else {
                 Text(text = "Gunakan minimal 8 karakter, huruf dan angka.", fontSize = 11.sp, color = TextMuted)
             }

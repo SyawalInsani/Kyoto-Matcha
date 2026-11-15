@@ -24,11 +24,11 @@ fun StockInScreen(
     onNavigateToHistory: () -> Unit
 ) {
     var isSubmitted by remember { mutableStateOf(false) }
-    var jumlah by remember { mutableStateOf("28") }
-    var hargaBeli by remember { mutableStateOf("Rp28.000") }
-    var pemasok by remember { mutableStateOf("PT Kemasan Nusantara") }
-    var tanggal by remember { mutableStateOf("3 November 2026") }
-    var catatan by remember { mutableStateOf("Pengadaan kemasan · Lot GL-1103") }
+    var jumlah by remember { mutableStateOf("") }
+    var hargaBeli by remember { mutableStateOf("") }
+    var pemasok by remember { mutableStateOf("") }
+    var tanggal by remember { mutableStateOf(com.example.kyotomatcha.util.DateUtil.getCurrentDateLongFormatted()) }
+    var catatan by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
     Scaffold(

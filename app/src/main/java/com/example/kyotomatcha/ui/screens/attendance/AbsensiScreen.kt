@@ -1,5 +1,8 @@
 package com.example.kyotomatcha.ui.screens.attendance
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.data.location.LocationHelper
+import com.example.kyotomatcha.data.location.Outlet
 import com.example.kyotomatcha.util.DateUtil
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.example.kyotomatcha.ui.components.BottomNavItem
 import com.example.kyotomatcha.ui.components.OmochaLogo
 import com.example.kyotomatcha.ui.theme.BackgroundCream
@@ -34,6 +43,8 @@ import com.example.kyotomatcha.ui.theme.MatchaGreen
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
 import com.example.kyotomatcha.ui.theme.TextMuted
 import com.example.kyotomatcha.ui.theme.White
+
+private fun currentClock(): String = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
 
 @Composable
 fun AbsensiScreen(
@@ -54,7 +65,31 @@ fun AbsensiScreen(
     val status by viewModel.attendanceStatus.collectAsState()
     val hasCheckedIn by viewModel.hasCheckedIn.collectAsState()
     val hasCheckedOut by viewModel.hasCheckedOut.collectAsState()
+    val shift by viewModel.selectedShift.collectAsState()
+    val distance by viewModel.distance.collectAsState()
+    val gpsStatus by viewModel.gpsStatus.collectAsState()
+    val gpsValid by viewModel.gpsValid.collectAsState()
+    val message by viewModel.message.collectAsState()
+    val isBusy by viewModel.isBusy.collectAsState()
     val scrollState = rememberScrollState()
+
+    // Jam berjalan (jam HP).
+    var clock by remember { mutableStateOf(currentClock()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            clock = currentClock()
+            delay(1000)
+        }
+    }
+
+    // Izin lokasi: diminta saat layar dibuka, lalu lokasi dan catatan absen diambil.
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        viewModel.refresh()
+    }
+    LaunchedEffect(Unit) {
+        if (LocationHelper.hasPermission(context)) viewModel.refresh()
+        else permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
 
     Scaffold(
         bottomBar = {
@@ -145,7 +180,7 @@ fun AbsensiScreen(
             ) {
                 Column {
                     Text(
-                        text = "08:00",
+                        text = clock,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryDarkGreen
@@ -160,14 +195,14 @@ fun AbsensiScreen(
 
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFE6F4EA)
+                    color = if (gpsValid) Color(0xFFE6F4EA) else Color(0xFFFDE8E8)
                 ) {
                     Text(
-                        text = "GPS valid",
+                        text = gpsStatus,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF137333)
+                        color = if (gpsValid) Color(0xFF137333) else Color(0xFFC53030)
                     )
                 }
             }
@@ -195,7 +230,7 @@ fun AbsensiScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Ilustrasi lokasi • Dalam Radius 100m",
+                            text = distance?.let { "Jarak ke kedai $it m • radius ${Outlet.RADIUS_M} m" } ?: gpsStatus,
                             fontSize = 12.sp,
                             color = TextMuted
                         )
@@ -237,7 +272,12 @@ fun AbsensiScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Jarak / radius izin", fontSize = 13.sp, color = TextMuted)
-                        Text(text = "42 m / 100 m", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MatchaGreen)
+                        Text(
+                            text = "${distance?.toString() ?: "-"} m / ${Outlet.RADIUS_M} m",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (gpsValid) MatchaGreen else Color(0xFFC53030)
+                        )
                     }
                 }
             }
@@ -259,7 +299,7 @@ fun AbsensiScreen(
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = when (status) {
-                        "Selesai" -> Color(0xFFE6F4EA)
+                        "Selesai", "Tepat waktu" -> Color(0xFFE6F4EA)
                         "Terlambat" -> Color(0xFFFEF3C7)
                         else -> Color(0xFFF1F3F4)
                     }
@@ -270,7 +310,7 @@ fun AbsensiScreen(
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = when (status) {
-                            "Selesai" -> Color(0xFF137333)
+                            "Selesai", "Tepat waktu" -> Color(0xFF137333)
                             "Terlambat" -> Color(0xFFD97706)
                             else -> TextMuted
                         }
@@ -286,6 +326,31 @@ fun AbsensiScreen(
                 color = TextMuted
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Pilihan shift: pagi 10:00-17:00, malam 17:00-23:30.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("pagi" to "Shift Pagi", "malam" to "Shift Malam").forEach { (key, label) ->
+                    val selected = shift == key
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (selected) MatchaGreen else CardBackground,
+                        modifier = Modifier.clickable { viewModel.selectShift(key) }
+                    ) {
+                        Text(
+                            text = label,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (selected) White else PrimaryDarkGreen
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
@@ -294,7 +359,7 @@ fun AbsensiScreen(
             ) {
                 Button(
                     onClick = { viewModel.checkIn() },
-                    enabled = !hasCheckedIn,
+                    enabled = !hasCheckedIn && !isBusy,
                     modifier = Modifier
                         .weight(1f)
                         .height(52.dp),
@@ -314,7 +379,7 @@ fun AbsensiScreen(
 
                 Button(
                     onClick = { viewModel.checkOut() },
-                    enabled = hasCheckedIn && !hasCheckedOut,
+                    enabled = hasCheckedIn && !hasCheckedOut && !isBusy,
                     modifier = Modifier
                         .weight(1f)
                         .height(52.dp),
@@ -331,6 +396,18 @@ fun AbsensiScreen(
                         color = if (hasCheckedOut) TextMuted else White
                     )
                 }
+            }
+
+            // Pesan dari server (awalan "!" = gagal).
+            if (message.isNotEmpty()) {
+                val failed = message.startsWith("!")
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = message.removePrefix("!"),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (failed) Color(0xFFC53030) else Color(0xFF137333)
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

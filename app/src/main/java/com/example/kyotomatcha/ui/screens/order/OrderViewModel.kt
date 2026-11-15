@@ -2,7 +2,9 @@ package com.example.kyotomatcha.ui.screens.order
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.kyotomatcha.data.local.SessionManager
+import kotlinx.coroutines.launch
 import com.example.kyotomatcha.data.repository.OrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +60,10 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
     val menuItems = OrderRepository.menuItems
     val cart = OrderRepository.cart
     val orders = OrderRepository.orders
+
+    init {
+        viewModelScope.launch { OrderRepository.loadMenu() }
+    }
 
     fun setSelectedSource(source: String) {
         sessionManager.setSelectedSource(source)

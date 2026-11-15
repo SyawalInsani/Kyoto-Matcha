@@ -2,13 +2,17 @@ package com.example.kyotomatcha.ui.screens.profile
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.data.repository.AuthRepository
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val sessionManager = SessionManager(application)
+    private val authRepository = AuthRepository(application)
 
     private val _name = MutableStateFlow(sessionManager.getUserName().ifEmpty { "Salsa" })
     val name: StateFlow<String> = _name.asStateFlow()
@@ -46,7 +50,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun toggleStockMovement(value: Boolean) { _stockMovement.value = value }
     fun toggleSalesSummary(value: Boolean) { _salesSummary.value = value }
 
+    // Sesi di HP dihapus seketika; pencabutan token di server berjalan di latar belakang.
     fun logout() {
-        sessionManager.setLoggedIn(false)
+        viewModelScope.launch { authRepository.logout() }
     }
 }

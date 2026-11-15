@@ -21,9 +21,9 @@ fun AddExpenseScreen(
     onNavigateBack: () -> Unit
 ) {
     var selectedKategori by remember { mutableStateOf("Bahan") }
-    var keterangan by remember { mutableStateOf("Es batu") }
-    var nominal by remember { mutableStateOf("Rp17.000") }
-    var tanggal by remember { mutableStateOf("3 Nov 2026") }
+    var keterangan by remember { mutableStateOf("") }
+    var nominal by remember { mutableStateOf("") }
+    var tanggal by remember { mutableStateOf(com.example.kyotomatcha.util.DateUtil.getCurrentDateFormatted()) }
     val scrollState = rememberScrollState()
 
     Scaffold(
