@@ -68,6 +68,7 @@ class AuthRepository(context: Context) {
     suspend fun logout() {
         val token = sessionManager.getToken()
         sessionManager.setLoggedIn(false)
+        ReportRepository.clear()
         if (token != null) {
             try {
                 // NonCancellable: tetap jalan walau layar Profil sudah ditutup.

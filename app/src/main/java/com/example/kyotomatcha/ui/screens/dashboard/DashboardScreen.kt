@@ -38,6 +38,8 @@ import com.example.kyotomatcha.ui.theme.MatchaGreen
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
 import com.example.kyotomatcha.ui.theme.TextMuted
 import com.example.kyotomatcha.ui.theme.White
+import com.example.kyotomatcha.util.CurrencyUtil
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun DashboardScreen(
@@ -57,6 +59,11 @@ fun DashboardScreen(
     val selectedBranch by viewModel.selectedBranch.collectAsState()
     val isExpanded by viewModel.isDropdownExpanded.collectAsState()
     val branches = viewModel.branches
+    val dash by viewModel.dashboard.collectAsState()
+    val sales = dash?.sales
+    val attendance = dash?.attendance
+    val stockAlerts = dash?.stock
+    LaunchedEffect(Unit) { viewModel.refresh() }
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -263,9 +270,9 @@ fun DashboardScreen(
                     ) {
                         Text(text = "Penjualan hari ini", fontSize = 12.sp, color = TextMuted)
                         Column {
-                            Text(text = "Rp758.020", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                            Text(text = sales?.let { CurrencyUtil.formatRupiah(it.total) } ?: "-", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text(text = "30 pesanan lunas / 30 gelas", fontSize = 10.sp, color = TextMuted)
+                            Text(text = if (dash == null) "Memuat..." else sales?.let { "${it.orders} pesanan lunas / ${it.cups} gelas" } ?: "Khusus pemilik dan kasir", fontSize = 10.sp, color = TextMuted)
                         }
                     }
                 }
@@ -284,7 +291,7 @@ fun DashboardScreen(
                     ) {
                         Text(text = "Pesanan menunggu bayar", fontSize = 12.sp, color = TextMuted)
                         Column {
-                            Text(text = "2", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                            Text(text = sales?.waiting_payment?.toString() ?: "-", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(text = "Belum tercatat dalam penjualan", fontSize = 10.sp, color = TextMuted)
                         }
@@ -312,9 +319,9 @@ fun DashboardScreen(
                     ) {
                         Text(text = "Karyawan hadir", fontSize = 12.sp, color = TextMuted)
                         Column {
-                            Text(text = "3 / 3", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                            Text(text = attendance?.let { "${it.present} / ${it.expected}" } ?: "-", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text(text = "2 tepat waktu - 1 terlambat", fontSize = 10.sp, color = TextMuted)
+                            Text(text = attendance?.let { "${it.on_time} tepat waktu - ${it.late} terlambat" } ?: "", fontSize = 10.sp, color = TextMuted)
                         }
                     }
                 }
@@ -333,9 +340,9 @@ fun DashboardScreen(
                     ) {
                         Text(text = "Bahan hampir habis", fontSize = 12.sp, color = TextMuted)
                         Column {
-                            Text(text = "2", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC53030))
+                            Text(text = stockAlerts?.needs_restock?.toString() ?: "-", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC53030))
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text(text = "Perlu ditambah hari ini", fontSize = 10.sp, color = TextMuted)
+                            Text(text = stockAlerts?.let { if (it.needs_restock == 0) "Semua stok aman" else "${it.low} menipis • ${it.empty} habis" } ?: "", fontSize = 10.sp, color = TextMuted)
                         }
                     }
                 }
@@ -395,7 +402,7 @@ fun DashboardScreen(
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "100%",
+                            text = "${attendance?.percentage ?: 0}%",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MatchaGreen
@@ -412,11 +419,11 @@ fun DashboardScreen(
                             .clip(RoundedCornerShape(4.dp))
                     ) {
                         Box(modifier = Modifier
-                            .weight(0.66f)
+                            .weight(((attendance?.percentage ?: 0) / 100f).coerceIn(0.001f, 0.999f))
                             .fillMaxHeight()
                             .background(MatchaGreen))
                         Box(modifier = Modifier
-                            .weight(0.34f)
+                            .weight((1f - (attendance?.percentage ?: 0) / 100f).coerceIn(0.001f, 0.999f))
                             .fillMaxHeight()
                             .background(Color(0xFFE2DDD0)))
                     }
@@ -427,9 +434,9 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "2 Tepat waktu", fontSize = 11.sp, color = MatchaGreen)
-                        Text(text = "1 Terlambat", fontSize = 11.sp, color = Color(0xFFD97706))
-                        Text(text = "0 Tidak hadir", fontSize = 11.sp, color = TextMuted)
+                        Text(text = "${attendance?.on_time ?: 0} Tepat waktu", fontSize = 11.sp, color = MatchaGreen)
+                        Text(text = "${attendance?.late ?: 0} Terlambat", fontSize = 11.sp, color = Color(0xFFD97706))
+                        Text(text = "${attendance?.absent ?: 0} Tidak hadir", fontSize = 11.sp, color = TextMuted)
                     }
                 }
             }
