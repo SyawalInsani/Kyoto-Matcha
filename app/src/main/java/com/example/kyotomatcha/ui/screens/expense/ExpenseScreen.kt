@@ -204,6 +204,7 @@ fun ExpenseItemCard(title: String, category: String, amount: String, time: Strin
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -225,7 +226,8 @@ fun ExpenseItemCard(title: String, category: String, amount: String, time: Strin
                     Text(text = branch, fontSize = 11.sp, color = TextMuted)
                 }
             }
-            Text(text = amount, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+            // Satu baris saja: nominal tidak boleh terpotong ("Rp30.00" / "0").
+            Text(text = amount, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen, maxLines = 1, softWrap = false)
         }
     }
 }

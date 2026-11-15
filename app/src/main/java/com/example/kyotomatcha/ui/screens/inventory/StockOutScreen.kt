@@ -24,10 +24,10 @@ fun StockOutScreen(
     onNavigateToHistory: () -> Unit
 ) {
     var isSubmitted by remember { mutableStateOf(false) }
-    var jumlah by remember { mutableStateOf("30") }
-    var tanggal by remember { mutableStateOf("3 November 2026") }
+    var jumlah by remember { mutableStateOf("") }
+    var tanggal by remember { mutableStateOf(com.example.kyotomatcha.util.DateUtil.getCurrentDateLongFormatted()) }
     var selectedTujuan by remember { mutableStateOf("Produksi") }
-    var catatan by remember { mutableStateOf("Berkurang otomatis dari pesanan minuman") }
+    var catatan by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
     Scaffold(

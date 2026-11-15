@@ -1,5 +1,7 @@
 package com.example.kyotomatcha.data.repository
 
+import android.util.Log
+import com.example.kyotomatcha.data.remote.RetrofitClient
 import com.example.kyotomatcha.ui.screens.order.CartItem
 import com.example.kyotomatcha.ui.screens.order.MenuItem
 import com.example.kyotomatcha.ui.screens.order.OrderModel
@@ -9,20 +11,40 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 object OrderRepository {
-    private val _menuItems = MutableStateFlow(
-        listOf(
-            MenuItem("1", "Matcha Latte", 25000, 24, "Minuman", "🍵"),
-            MenuItem("2", "Oat Matcha Latte", 30000, 24, "Minuman", "🥛"),
-            MenuItem("3", "Strawberry Matcha", 30000, 18, "Minuman", "🍓"),
-            MenuItem("4", "Coconut Matcha", 30000, 24, "Minuman", "🥥"),
-            MenuItem("5", "Blueberry Matcha", 30000, 20, "Minuman", "🫐"),
-            MenuItem("6", "Brownies Burnt Cheesecake", 25000, 6, "Dessert", "🍰"),
-            MenuItem("7", "Matcha Burnt Cheesecake", 25000, 6, "Dessert", "🧀"),
-            MenuItem("8", "Chocolate Burnt Cheesecake", 25000, 6, "Dessert", "🍫"),
-            MenuItem("9", "Oreo Burnt Cheesecake", 25000, 6, "Dessert", "🍪")
-        )
-    )
+    // Menu diambil dari server (GET /api/products). Daftar ini kosong sampai berhasil dimuat.
+    private val _menuItems = MutableStateFlow<List<MenuItem>>(emptyList())
     val menuItems: StateFlow<List<MenuItem>> = _menuItems.asStateFlow()
+
+    @Volatile
+    private var menuLoaded = false
+
+    // Stok per menu belum ada di server (menunggu API stok), jadi sementara dihitung di HP mulai dari angka ini.
+    private const val PLACEHOLDER_STOCK = 99
+
+    /** Muat menu dari server sekali per sesi aplikasi. Gagal -> dicoba lagi saat layar dibuka berikutnya. */
+    suspend fun loadMenu() {
+        if (menuLoaded) return
+        try {
+            val res = RetrofitClient.apiService.products()
+            val products = res.body()?.data
+            if (res.isSuccessful && products != null) {
+                _menuItems.value = products.map {
+                    val isDessert = it.category == "dessert"
+                    MenuItem(
+                        id = it.id.toString(),
+                        name = it.name,
+                        price = it.price,
+                        stock = PLACEHOLDER_STOCK,
+                        category = if (isDessert) "Dessert" else "Minuman",
+                        imagePlaceholder = if (isDessert) "🍰" else "🍵"
+                    )
+                }
+                menuLoaded = true
+            }
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "Memuat menu gagal", e)
+        }
+    }
 
     private val _cart = MutableStateFlow<Map<String, CartItem>>(emptyMap())
     val cart: StateFlow<Map<String, CartItem>> = _cart.asStateFlow()

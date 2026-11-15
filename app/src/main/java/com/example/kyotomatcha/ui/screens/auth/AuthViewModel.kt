@@ -90,6 +90,16 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _regConfirmError = MutableStateFlow(false)
     val regConfirmError: StateFlow<Boolean> = _regConfirmError.asStateFlow()
 
+    // Teks error per kolom (dari aturan di aplikasi atau pesan asli dari server).
+    private val _regEmailErrorText = MutableStateFlow("")
+    val regEmailErrorText: StateFlow<String> = _regEmailErrorText.asStateFlow()
+
+    private val _regPhoneErrorText = MutableStateFlow("")
+    val regPhoneErrorText: StateFlow<String> = _regPhoneErrorText.asStateFlow()
+
+    private val _regPasswordErrorText = MutableStateFlow("")
+    val regPasswordErrorText: StateFlow<String> = _regPasswordErrorText.asStateFlow()
+
     fun setLoginEmail(email: String) {
         _loginEmail.value = email
         if (_emailError.value) validateAndLogin(onSuccess = {}, checkOnly = true)
@@ -173,7 +183,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun validateAndRegister(onSuccess: (email: String, name: String) -> Unit, checkOnly: Boolean = false) {
         val name = _fullName.value.trim()
         val email = _registerEmail.value.trim()
-        val phone = _phoneNumber.value.trim()
+        // Spasi dan tanda "-" di nomor telepon dibuang (mis. "0812 8346 2705").
+        val phone = _phoneNumber.value.replace(Regex("[\\s-]"), "")
         val password = _registerPassword.value.trim()
         val confirm = _confirmPassword.value.trim()
 
@@ -185,14 +196,27 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         val emailErr = email.isBlank() || !email.contains("@")
         _regEmailError.value = emailErr
+        _regEmailErrorText.value = if (emailErr) "Masukkan alamat email yang valid." else ""
         if (emailErr) hasErr = true
 
-        val phoneErr = phone.isBlank()
+        // Sama dengan aturan server: angka saja, 8-15 digit, boleh diawali "+".
+        val phoneErr = !Regex("^[0-9+][0-9]{7,14}$").matches(phone)
         _regPhoneError.value = phoneErr
+        _regPhoneErrorText.value = when {
+            !phoneErr -> ""
+            phone.isBlank() -> "Nomor telepon wajib diisi."
+            else -> "Nomor telepon hanya angka, 8-15 digit (boleh diawali +)."
+        }
         if (phoneErr) hasErr = true
 
-        val passErr = password.length < 8
+        // Sama dengan aturan server: minimal 8 karakter, berisi huruf dan angka.
+        val passErr = password.length < 8 || password.none { it.isLetter() } || password.none { it.isDigit() }
         _regPasswordError.value = passErr
+        _regPasswordErrorText.value = when {
+            !passErr -> ""
+            password.length < 8 -> "Kata sandi minimal 8 karakter."
+            else -> "Kata sandi harus berisi huruf dan angka."
+        }
         if (passErr) hasErr = true
 
         val confirmErr = (confirm != password || confirm.isBlank())
@@ -213,9 +237,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     is AuthResult.Error -> {
                         _serverError.value = result.message
-                        _regEmailError.value = "email" in result.fields
-                        _regPhoneError.value = "phone" in result.fields
-                        _regPasswordError.value = "password" in result.fields
+                        val f = result.fieldMessages
+                        _regEmailError.value = "email" in f
+                        _regEmailErrorText.value = f["email"].orEmpty()
+                        _regPhoneError.value = "phone" in f
+                        _regPhoneErrorText.value = f["phone"].orEmpty()
+                        _regPasswordError.value = "password" in f
+                        _regPasswordErrorText.value = f["password"].orEmpty()
                         _showRegisterErrorBanner.value = true
                     }
                 }
