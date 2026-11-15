@@ -1,11 +1,17 @@
 package com.example.kyotomatcha.data.repository
 
 import android.util.Log
+import com.example.kyotomatcha.data.remote.CreateOrderRequest
+import com.example.kyotomatcha.data.remote.NETWORK_ERROR_MESSAGE
+import com.example.kyotomatcha.data.remote.OrderDto
+import com.example.kyotomatcha.data.remote.OrderItemRequest
+import com.example.kyotomatcha.data.remote.OrderStatusRequest
+import com.example.kyotomatcha.data.remote.PayRequest
 import com.example.kyotomatcha.data.remote.RetrofitClient
+import com.example.kyotomatcha.data.remote.toApiError
 import com.example.kyotomatcha.ui.screens.order.CartItem
 import com.example.kyotomatcha.ui.screens.order.MenuItem
 import com.example.kyotomatcha.ui.screens.order.OrderModel
-import com.example.kyotomatcha.util.DateUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,14 +60,8 @@ object OrderRepository {
     private val _cart = MutableStateFlow<Map<String, CartItem>>(emptyMap())
     val cart: StateFlow<Map<String, CartItem>> = _cart.asStateFlow()
 
-    private val _orders = MutableStateFlow(
-        listOf(
-            OrderModel("KM-261103-038", "09:40", "3 Nov 2026", "Offline", "2 Matcha Latte + 1 Strawberry Matcha", 80000, "Menunggu bayar", "Salsa", emptyList()),
-            OrderModel("KM-261103-037", "09:35", "3 Nov 2026", "Gojek", "Matcha Latte + Strawberry Matcha", 55000, "Diproses", "Salsa", emptyList()),
-            OrderModel("KM-261103-036", "09:28", "3 Nov 2026", "Grab", "2 Strawberry Matcha", 60000, "Selesai", "Salsa", emptyList()),
-            OrderModel("KM-261103-035", "09:20", "3 Nov 2026", "Shopee", "1 Strawberry Matcha", 30000, "Batal", "Salsa", emptyList())
-        )
-    )
+    // Pesanan hari ini dari server (terbaru di atas). Kosong sampai dimuat.
+    private val _orders = MutableStateFlow<List<OrderModel>>(emptyList())
     val orders: StateFlow<List<OrderModel>> = _orders.asStateFlow()
 
     fun addToCart(item: MenuItem) {
@@ -123,35 +123,122 @@ object OrderRepository {
         _cart.value = emptyMap()
     }
 
-    fun createOrder(source: String, userName: String, status: String = "Diproses") {
-        val cartItems = _cart.value.values.toList()
-        val total = cartItems.sumOf { it.menuItem.price * it.quantity }
-        val itemsSummary = cartItems.joinToString(" + ") { "${it.quantity} ${it.menuItem.name}" }
-        val newOrder = OrderModel(
-            id = "KM-${System.currentTimeMillis().toString().takeLast(6)}",
-            time = DateUtil.getCurrentTimeFormatted(),
-            date = DateUtil.getCurrentDateFormatted(),
-            source = source,
-            itemsSummary = itemsSummary.ifEmpty { "Pesanan Baru" },
-            total = total,
-            status = status,
-            cashier = userName,
-            items = cartItems
-        )
-        val currentOrders = _orders.value.toMutableList()
-        currentOrders.add(0, newOrder)
-        _orders.value = currentOrders
-        clearCart()
+    /** Muat pesanan hari ini dari server. */
+    suspend fun loadOrders() {
+        try {
+            val res = RetrofitClient.apiService.orders()
+            val rows = res.body()?.data
+            if (res.isSuccessful && rows != null) _orders.value = rows.map { toModel(it) }
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "Memuat pesanan gagal", e)
+        }
     }
 
-    fun updateOrderStatus(orderId: String, newStatus: String) {
-        val currentOrders = _orders.value.map { order ->
-            if (order.id.equals(orderId, ignoreCase = true)) {
-                order.copy(status = newStatus)
-            } else {
-                order
+    /**
+     * Catat isi keranjang sebagai pesanan di server. Harga dan total dihitung server.
+     * payCash = true: pesanan offline langsung dibayar tunai (status Diproses).
+     * Mengembalikan null bila berhasil, atau pesan error.
+     */
+    suspend fun createOrder(source: String, payCash: Boolean): String? {
+        val lines = _cart.value.values.toList()
+        if (lines.isEmpty()) return "Keranjang masih kosong."
+        val isOnline = !source.equals("Offline", ignoreCase = true)
+        val request = CreateOrderRequest(
+            source = if (isOnline) "online" else "offline",
+            platform = if (isOnline) source.lowercase() else null,
+            items = lines.map { OrderItemRequest(it.menuItem.id.toInt(), it.quantity, it.notes.ifBlank { null }) }
+        )
+        return try {
+            val api = RetrofitClient.apiService
+            val res = api.createOrder(request)
+            var order = res.body()?.data
+            if (!res.isSuccessful || order == null) return res.toApiError().message
+
+            var payError: String? = null
+            if (payCash && !isOnline) {
+                val payRes = api.payOrder(order.id, PayRequest("tunai"))
+                if (payRes.isSuccessful) order = payRes.body()?.data ?: order else payError = payRes.toApiError().message
             }
+            _orders.value = listOf(toModel(order)) + _orders.value.filter { it.id != order.order_number }
+            clearCart()
+            refreshMenuAfterStockChange()
+            payError?.let { "Pesanan tercatat, tetapi pembayaran gagal dikonfirmasi: $it" }
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "Catat pesanan gagal", e)
+            NETWORK_ERROR_MESSAGE
         }
-        _orders.value = currentOrders
+    }
+
+    /**
+     * Ubah status pesanan di server. newStatus memakai istilah layar:
+     * "Diproses" = konfirmasi pembayaran (payMethod: qris/tunai), "Selesai", "Batal" (dengan alasan).
+     * Mengembalikan null bila berhasil, atau pesan error.
+     */
+    suspend fun updateOrderStatus(orderNumber: String, newStatus: String, reason: String?, payMethod: String): String? {
+        val order = _orders.value.firstOrNull { it.id.equals(orderNumber, ignoreCase = true) }
+            ?: return "Pesanan tidak ditemukan. Muat ulang daftar pesanan."
+        return try {
+            val api = RetrofitClient.apiService
+            val res = when (newStatus) {
+                "Diproses" -> api.payOrder(order.serverId, PayRequest(payMethod))
+                "Selesai" -> api.updateOrderStatus(order.serverId, OrderStatusRequest("selesai", null))
+                else -> api.updateOrderStatus(order.serverId, OrderStatusRequest("batal", reason?.ifBlank { null } ?: "Dibatalkan"))
+            }
+            val updated = res.body()?.data
+            if (res.isSuccessful && updated != null) {
+                _orders.value = _orders.value.map { if (it.serverId == updated.id) toModel(updated) else it }
+                if (newStatus == "Batal") refreshMenuAfterStockChange()
+                null
+            } else {
+                loadOrders() // tampilkan status yang sebenarnya di server
+                res.toApiError().message
+            }
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "Ubah status pesanan gagal", e)
+            NETWORK_ERROR_MESSAGE
+        }
+    }
+
+    // Stok berubah (pesanan dicatat/dibatalkan): muat ulang menu agar angka stok sesuai server.
+    private suspend fun refreshMenuAfterStockChange() {
+        menuLoaded = false
+        loadMenu()
+    }
+
+    private fun toModel(o: OrderDto): OrderModel {
+        val menu = _menuItems.value.associateBy { it.id }
+        val items = o.items.map { line ->
+            val known = menu[line.product_id.toString()]
+            CartItem(
+                MenuItem(line.product_id.toString(), line.name, line.unit_price, known?.stock ?: 0, known?.category ?: "Minuman", known?.imagePlaceholder ?: "🍵"),
+                line.qty,
+                line.note.orEmpty()
+            )
+        }
+        return OrderModel(
+            id = o.order_number,
+            time = o.created_at.substring(11, 16),
+            date = shortDate(o.created_at),
+            source = if (o.source == "online") (o.platform ?: "Online").replaceFirstChar { it.uppercase() } else "Offline",
+            itemsSummary = items.joinToString(" + ") { "${it.quantity} ${it.menuItem.name}" },
+            total = o.total,
+            status = when (o.status) {
+                "menunggu_bayar" -> "Menunggu bayar"
+                "diproses" -> "Diproses"
+                "selesai" -> "Selesai"
+                else -> "Batal"
+            },
+            cashier = o.cashier,
+            items = items,
+            serverId = o.id
+        )
+    }
+
+    // "2026-11-16T09:40:00+08:00" -> "16 Nov 2026" (tanggal setempat kedai, sesuai yang dikirim server).
+    private fun shortDate(iso: String): String {
+        val months = listOf("Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
+        val parts = iso.take(10).split("-")
+        val month = parts.getOrNull(1)?.toIntOrNull()?.let { months.getOrNull(it - 1) } ?: return iso.take(10)
+        return "${parts[2].toInt()} $month ${parts[0]}"
     }
 }

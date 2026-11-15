@@ -41,6 +41,12 @@ fun OrderDetailScreen(
     val userRole = sessionManager.getUserRole()
     val currentDate = remember { DateUtil.getCurrentDateFormatted() }
 
+    val orderError by viewModel.orderError.collectAsState()
+    LaunchedEffect(orderId) {
+        viewModel.clearOrderError()
+        viewModel.refreshOrders()
+    }
+
     val source = order?.source ?: "Offline"
     val status = order?.status ?: "Diproses"
     val orderTime = order?.time ?: "09:35"
@@ -68,30 +74,55 @@ fun OrderDetailScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Button(
-                        onClick = {
-                            viewModel.updateOrderStatus(orderId, "Selesai")
-                            onNavigateBack()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(26.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MatchaGreen)
-                    ) {
-                        Text(text = "Tandai Selesai", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = White)
+                    if (orderError.isNotEmpty()) {
+                        Text(text = orderError, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFFC53030))
                     }
 
-                    OutlinedButton(
-                        onClick = { showCancelDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(26.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFC53030)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC53030))
-                    ) {
-                        Text(text = "Batalkan Pesanan", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC53030))
+                    if (status == "Menunggu bayar") {
+                        // Pembayaran offline dikonfirmasi kasir; server mencatat siapa yang mengonfirmasi.
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
+                            listOf("qris" to "Terima QRIS", "tunai" to "Terima Tunai").forEach { (method, label) ->
+                                Button(
+                                    onClick = { viewModel.updateOrderStatus(orderId, "Diproses", payMethod = method) },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp),
+                                    shape = RoundedCornerShape(26.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MatchaGreen)
+                                ) {
+                                    Text(text = label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = White)
+                                }
+                            }
+                        }
+                    }
+
+                    if (status == "Diproses") {
+                        Button(
+                            onClick = {
+                                viewModel.updateOrderStatus(orderId, "Selesai") { error -> if (error == null) onNavigateBack() }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MatchaGreen)
+                        ) {
+                            Text(text = "Tandai Selesai", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = White)
+                        }
+                    }
+
+                    if (status == "Menunggu bayar" || status == "Diproses") {
+                        OutlinedButton(
+                            onClick = { showCancelDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(26.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFC53030)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC53030))
+                        ) {
+                            Text(text = "Batalkan Pesanan", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFFC53030))
+                        }
                     }
                 }
             }
@@ -306,9 +337,10 @@ fun OrderDetailScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            viewModel.updateOrderStatus(orderId, "Batal")
+                            viewModel.updateOrderStatus(orderId, "Batal", reason = cancelReason) { error ->
+                                if (error == null) onNavigateBack()
+                            }
                             showCancelDialog = false
-                            onNavigateBack()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC53030)),
                         shape = RoundedCornerShape(16.dp)
