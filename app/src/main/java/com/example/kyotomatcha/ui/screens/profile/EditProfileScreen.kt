@@ -193,7 +193,7 @@ fun EditProfileScreen(
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    ProfileInfoRow(label = "ID karyawan", value = "KM-002")
+                    ProfileInfoRow(label = "ID karyawan", value = com.example.kyotomatcha.data.local.SessionManager(androidx.compose.ui.platform.LocalContext.current).getEmployeeCode())
                     Spacer(modifier = Modifier.height(10.dp))
                     ProfileInfoRow(label = "Peran", value = "Kasir")
                     Spacer(modifier = Modifier.height(10.dp))

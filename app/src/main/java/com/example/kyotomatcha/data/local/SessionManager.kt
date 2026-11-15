@@ -39,6 +39,9 @@ class SessionManager(context: Context) {
 
     fun getToken(): String? = prefs.getString("KEY_TOKEN", null)
 
+    // Kode karyawan dari server (mis. KM-003). Pemilik tidak punya kode, jadi tampil "-".
+    fun getEmployeeCode(): String = prefs.getString("KEY_EMPLOYEE_CODE", null)?.ifBlank { null } ?: "-"
+
     fun getUserName(): String {
         return prefs.getString("KEY_NAME", "Salsa") ?: "Salsa"
     }
