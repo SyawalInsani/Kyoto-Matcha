@@ -44,6 +44,8 @@ fun OrderSummaryScreen(
     viewModel: OrderViewModel = viewModel()
 ) {
     val cart by viewModel.cart.collectAsState()
+    val isSaving by viewModel.isSaving.collectAsState()
+    val orderError by viewModel.orderError.collectAsState()
     val selectedSource by viewModel.selectedSource.collectAsState()
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
@@ -73,21 +75,16 @@ fun OrderSummaryScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                val isOffline = selectedSource.equals("Offline", ignoreCase = true)
-                                val currentStatus = viewModel.selectedOrderStatus.value
-                                viewModel.createOrder(currentStatus)
-                                if (isOffline && currentStatus.equals("Menunggu bayar", ignoreCase = true)) {
-                                    onNavigateToQris()
-                                } else {
-                                    onNavigateToSavedOrder()
+                            .clickable(enabled = !isSaving && cart.isNotEmpty()) {
+                                viewModel.createOrder { goToQris ->
+                                    if (goToQris) onNavigateToQris() else onNavigateToSavedOrder()
                                 }
                             }
                             .padding(vertical = 16.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Simpan Pesanan",
+                            text = if (isSaving) "Menyimpan..." else "Simpan Pesanan",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = White
@@ -152,7 +149,7 @@ fun OrderSummaryScreen(
                             color = PrimaryDarkGreen
                         )
                         Text(
-                            text = "Pesanan KM-261103-038",
+                            text = "Pesanan baru",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -200,13 +197,15 @@ fun OrderSummaryScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                listOf("Diproses", "Menunggu bayar", "Selesai").forEach { statusOpt ->
-                    val isSelected = selectedOrderStatus == statusOpt
+                // Offline: bayar nanti lewat QRIS atau sudah dibayar tunai. Online: server langsung "Diproses".
+                val isOfflineSource = selectedSource.equals("Offline", ignoreCase = true)
+                (if (isOfflineSource) listOf("Menunggu bayar", "Dibayar tunai") else listOf("Diproses")).forEach { statusOpt ->
+                    val isSelected = !isOfflineSource || selectedOrderStatus == statusOpt
                     Surface(
                         shape = RoundedCornerShape(16.dp),
                         color = if (isSelected) PrimaryDarkGreen else White,
                         border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2DDD0)),
-                        modifier = Modifier.clickable { viewModel.setSelectedOrderStatus(statusOpt) }
+                        modifier = Modifier.clickable(enabled = isOfflineSource) { viewModel.setSelectedOrderStatus(statusOpt) }
                     ) {
                         Text(
                             text = statusOpt,
@@ -220,6 +219,11 @@ fun OrderSummaryScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (orderError.isNotEmpty()) {
+                Text(text = orderError, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFFC53030))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             // Cart Items List
             cart.values.forEach { cartItem ->

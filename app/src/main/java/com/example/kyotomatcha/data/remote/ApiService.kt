@@ -5,6 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 data class LoginRequest(val email: String, val password: String)
 
@@ -119,6 +120,43 @@ data class MovementDto(
 
 data class MovementsResponse(val data: List<MovementDto>?)
 
+// ---- Pesanan ----
+data class OrderItemRequest(val product_id: Int, val qty: Int, val note: String?)
+
+data class CreateOrderRequest(val source: String, val platform: String?, val items: List<OrderItemRequest>)
+
+data class OrderItemDto(
+    val product_id: Int,
+    val name: String,
+    val qty: Int,
+    val unit_price: Int,
+    val subtotal: Int,
+    val note: String?
+)
+
+data class PaymentDto(val method: String, val amount: Int, val status: String)
+
+data class OrderDto(
+    val id: Int,
+    val order_number: String,
+    val source: String,   // offline, online
+    val platform: String?, // shopee, gojek, grab
+    val status: String,   // menunggu_bayar, diproses, selesai, batal
+    val total: Int,
+    val cashier: String,
+    val created_at: String,
+    val items: List<OrderItemDto>,
+    val payment: PaymentDto?
+)
+
+data class OrderResponse(val message: String?, val data: OrderDto?)
+
+data class OrdersResponse(val data: List<OrderDto>?)
+
+data class PayRequest(val method: String)
+
+data class OrderStatusRequest(val status: String, val cancel_reason: String?)
+
 interface ApiService {
     @POST("login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
@@ -159,4 +197,16 @@ interface ApiService {
 
     @POST("inventory/items")
     suspend fun addInventoryItem(@Body body: NewItemRequest): Response<NewItemResponse>
+
+    @GET("orders")
+    suspend fun orders(): Response<OrdersResponse>
+
+    @POST("orders")
+    suspend fun createOrder(@Body body: CreateOrderRequest): Response<OrderResponse>
+
+    @POST("orders/{id}/pay")
+    suspend fun payOrder(@Path("id") id: Int, @Body body: PayRequest): Response<OrderResponse>
+
+    @POST("orders/{id}/status")
+    suspend fun updateOrderStatus(@Path("id") id: Int, @Body body: OrderStatusRequest): Response<OrderResponse>
 }

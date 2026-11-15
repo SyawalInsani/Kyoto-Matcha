@@ -41,6 +41,7 @@ fun PaymentConfirmationScreen(
     val userName = sessionManager.getUserName()
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("Nominal bukti tidak sesuai dengan total pesanan.") }
+    var confirmError by remember { mutableStateOf("") }
 
     Scaffold(
         bottomBar = {
@@ -51,6 +52,16 @@ fun PaymentConfirmationScreen(
                 color = White,
                 shadowElevation = 12.dp
             ) {
+                Column {
+                if (confirmError.isNotEmpty()) {
+                    Text(
+                        text = confirmError,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFC53030),
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                    )
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -73,9 +84,11 @@ fun PaymentConfirmationScreen(
                         onClick = {
                             val latestOrderId = viewModel.orders.value.firstOrNull()?.id
                             if (latestOrderId != null) {
-                                viewModel.updateOrderStatus(latestOrderId, "Diproses")
+                                viewModel.updateOrderStatus(latestOrderId, "Diproses", payMethod = "qris") { error ->
+                                    confirmError = error ?: ""
+                                    if (error == null) onConfirmSuccess()
+                                }
                             }
-                            onConfirmSuccess()
                         },
                         modifier = Modifier
                             .weight(1f)
@@ -85,6 +98,7 @@ fun PaymentConfirmationScreen(
                     ) {
                         Text(text = "Konfirmasi", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = White)
                     }
+                }
                 }
             }
         },
@@ -118,7 +132,7 @@ fun PaymentConfirmationScreen(
                         color = PrimaryDarkGreen
                     )
                     Text(
-                        text = "Kyoto-Matcha Senopati • $userName",
+                        text = "Kyoto-Matcha • $userName",
                         fontSize = 11.sp,
                         color = TextMuted
                     )
@@ -286,10 +300,12 @@ fun PaymentConfirmationScreen(
                         onClick = {
                             val latestOrderId = viewModel.orders.value.firstOrNull()?.id
                             if (latestOrderId != null) {
-                                viewModel.updateOrderStatus(latestOrderId, "Batal")
+                                viewModel.updateOrderStatus(latestOrderId, "Batal", reason = rejectReason) { error ->
+                                    confirmError = error ?: ""
+                                    if (error == null) onNavigateBack()
+                                }
                             }
                             showRejectDialog = false
-                            onNavigateBack()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC53030)),
                         shape = RoundedCornerShape(16.dp)

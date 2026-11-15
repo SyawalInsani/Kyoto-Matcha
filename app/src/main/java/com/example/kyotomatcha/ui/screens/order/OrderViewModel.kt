@@ -34,7 +34,8 @@ data class OrderModel(
     val total: Int,
     val status: String, // Menunggu bayar, Diproses, Selesai, Batal
     val cashier: String = "Muhammad Syawal Insani",
-    val items: List<CartItem> = emptyList()
+    val items: List<CartItem> = emptyList(),
+    val serverId: Int = 0 // id pesanan di server (untuk bayar / ubah status)
 )
 
 class OrderViewModel(application: Application) : AndroidViewModel(application) {
@@ -54,15 +55,35 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
     private val _orderListTab = MutableStateFlow("Semua")
     val orderListTab: StateFlow<String> = _orderListTab.asStateFlow()
 
-    private val _selectedOrderStatus = MutableStateFlow("Diproses")
+    // Pilihan saat menyimpan pesanan offline: "Menunggu bayar" (lanjut ke QRIS) atau "Dibayar tunai".
+    // Pesanan online tidak memakai pilihan ini: server langsung memberi status Diproses.
+    private val _selectedOrderStatus = MutableStateFlow("Menunggu bayar")
     val selectedOrderStatus: StateFlow<String> = _selectedOrderStatus.asStateFlow()
 
     val menuItems = OrderRepository.menuItems
     val cart = OrderRepository.cart
     val orders = OrderRepository.orders
 
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+    // Pesan error terakhir dari server saat menyimpan / mengubah pesanan; kosong = tidak ada.
+    private val _orderError = MutableStateFlow("")
+    val orderError: StateFlow<String> = _orderError.asStateFlow()
+
     init {
-        viewModelScope.launch { OrderRepository.loadMenu() }
+        viewModelScope.launch {
+            OrderRepository.loadMenu()
+            OrderRepository.loadOrders()
+        }
+    }
+
+    fun refreshOrders() {
+        viewModelScope.launch { OrderRepository.loadOrders() }
+    }
+
+    fun clearOrderError() {
+        _orderError.value = ""
     }
 
     fun setSelectedSource(source: String) {
@@ -96,11 +117,39 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
 
     fun getTotalPrice(): Int = cart.value.values.sumOf { it.menuItem.price * it.quantity }
 
-    fun createOrder(status: String = _selectedOrderStatus.value) {
-        OrderRepository.createOrder(sessionManager.getSelectedSource(), userName, status)
+    /**
+     * Simpan keranjang sebagai pesanan di server. onSaved(goToQris): goToQris = true bila pesanan offline
+     * menunggu pembayaran QRIS. Bila gagal, pesan ada di orderError dan keranjang tetap utuh.
+     */
+    fun createOrder(onSaved: (goToQris: Boolean) -> Unit) {
+        if (_isSaving.value) return
+        val source = sessionManager.getSelectedSource()
+        val isOffline = source.equals("Offline", ignoreCase = true)
+        val payCash = isOffline && _selectedOrderStatus.value == "Dibayar tunai"
+        viewModelScope.launch {
+            _isSaving.value = true
+            _orderError.value = ""
+            val error = OrderRepository.createOrder(source, payCash)
+            _isSaving.value = false
+            if (error == null) onSaved(isOffline && !payCash) else _orderError.value = error
+        }
     }
 
-    fun updateOrderStatus(orderId: String, newStatus: String) {
-        OrderRepository.updateOrderStatus(orderId, newStatus)
+    /**
+     * Ubah status pesanan di server. newStatus: "Diproses" (konfirmasi bayar), "Selesai", "Batal".
+     * onDone(null) bila berhasil, atau pesan error.
+     */
+    fun updateOrderStatus(
+        orderId: String,
+        newStatus: String,
+        reason: String? = null,
+        payMethod: String = "qris",
+        onDone: (String?) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val error = OrderRepository.updateOrderStatus(orderId, newStatus, reason, payMethod)
+            _orderError.value = error.orEmpty()
+            onDone(error)
+        }
     }
 }
