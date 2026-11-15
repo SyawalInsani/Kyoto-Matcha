@@ -18,8 +18,13 @@ object OrderRepository {
     @Volatile
     private var menuLoaded = false
 
-    // Stok per menu belum ada di server (menunggu API stok), jadi sementara dihitung di HP mulai dari angka ini.
-    private const val PLACEHOLDER_STOCK = 99
+    // Menu yang stoknya tidak dilacak server (stock = null) dianggap selalu tersedia.
+    private const val UNTRACKED_STOCK = 999
+
+    /** Paksa muat ulang menu (stok berubah) pada pembukaan layar Pesanan berikutnya. */
+    fun invalidateMenu() {
+        menuLoaded = false
+    }
 
     /** Muat menu dari server sekali per sesi aplikasi. Gagal -> dicoba lagi saat layar dibuka berikutnya. */
     suspend fun loadMenu() {
@@ -34,7 +39,7 @@ object OrderRepository {
                         id = it.id.toString(),
                         name = it.name,
                         price = it.price,
-                        stock = PLACEHOLDER_STOCK,
+                        stock = it.stock ?: UNTRACKED_STOCK,
                         category = if (isDessert) "Dessert" else "Minuman",
                         imagePlaceholder = if (isDessert) "🍰" else "🍵"
                     )
