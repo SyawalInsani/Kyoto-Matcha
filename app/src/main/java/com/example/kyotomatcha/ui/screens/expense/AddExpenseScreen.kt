@@ -14,16 +14,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kyotomatcha.ui.theme.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kyotomatcha.data.local.SessionManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: ExpenseViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val userName = remember { SessionManager(context).getUserName() }
+    val saving by viewModel.isSaving.collectAsState()
+    val formError by viewModel.formError.collectAsState()
+    LaunchedEffect(Unit) { viewModel.clearError() }
     var selectedKategori by remember { mutableStateOf("Bahan") }
     var keterangan by remember { mutableStateOf("") }
     var nominal by remember { mutableStateOf("") }
-    var tanggal by remember { mutableStateOf(com.example.kyotomatcha.util.DateUtil.getCurrentDateFormatted()) }
+    var dateChoice by remember { mutableStateOf("today") } // today | yesterday
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -32,7 +41,7 @@ fun AddExpenseScreen(
                 title = {
                     Column {
                         Text(text = "Catat Pengeluaran", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
-                        Text(text = "Kyoto-Matcha · Salsa", fontSize = 12.sp, color = TextMuted)
+                        Text(text = "Kyoto-Matcha · $userName", fontSize = 12.sp, color = TextMuted)
                     }
                 },
                 navigationIcon = {
@@ -104,7 +113,8 @@ fun AddExpenseScreen(
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
                 value = nominal,
-                onValueChange = { nominal = it },
+                onValueChange = { nominal = it.filter { c -> c.isDigit() } },
+                placeholder = { Text("Contoh: 17000", color = TextMuted) },
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = White, unfocusedContainerColor = White),
                 modifier = Modifier.fillMaxWidth()
@@ -113,30 +123,44 @@ fun AddExpenseScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(text = "Tanggal *", fontSize = 12.sp, color = TextMuted)
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedTextField(
-                value = tanggal,
-                onValueChange = { tanggal = it },
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = White, unfocusedContainerColor = White),
-                modifier = Modifier.fillMaxWidth()
-            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("today" to "Hari ini", "yesterday" to "Kemarin").forEach { (key, label) ->
+                    val isSelected = dateChoice == key
+                    Button(
+                        onClick = { dateChoice = key },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isSelected) PrimaryDarkGreen else White),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(text = label, color = if (isSelected) White else PrimaryDarkGreen, fontSize = 13.sp)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(text = "Dicatat oleh Salsa untuk Kyoto-Matcha.", fontSize = 12.sp, color = TextMuted)
+            Text(text = "Dicatat oleh $userName untuk Kyoto-Matcha.", fontSize = 12.sp, color = TextMuted)
+
+            if (formError.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = formError, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = androidx.compose.ui.graphics.Color(0xFFC53030))
+            }
 
             Spacer(modifier = Modifier.height(40.dp))
 
             Button(
-                onClick = onNavigateBack,
+                onClick = {
+                    viewModel.submit(selectedKategori, keterangan, nominal, dateChoice == "yesterday") { onNavigateBack() }
+                },
+                enabled = !saving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(26.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MatchaGreen)
             ) {
-                Text(text = "Simpan Pengeluaran", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+                Text(text = if (saving) "Menyimpan..." else "Simpan Pengeluaran", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
             }
         }
     }

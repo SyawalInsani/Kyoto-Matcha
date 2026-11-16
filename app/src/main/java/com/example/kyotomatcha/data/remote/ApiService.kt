@@ -248,6 +248,24 @@ data class SalesReportDto(
 
 data class SalesReportResponse(val data: SalesReportDto?)
 
+// ---- Pengeluaran ----
+data class ExpenseDto(
+    val id: Int,
+    val category: String, // uang_makan, bahan, lainnya
+    val category_label: String,
+    val description: String,
+    val amount: Int,
+    val expense_date: String,
+    val recorded_by: String,
+    val created_at: String
+)
+
+data class ExpensesResponse(val date: String?, val total: Int?, val count: Int?, val data: List<ExpenseDto>?)
+
+data class ExpenseBody(val category: String, val description: String, val amount: Int, val expense_date: String?)
+
+data class ExpenseResponse(val message: String?, val data: ExpenseDto?)
+
 interface ApiService {
     @POST("login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
@@ -333,4 +351,10 @@ interface ApiService {
 
     @GET("reports/sales")
     suspend fun salesReport(@Query("period") period: String): Response<SalesReportResponse>
+
+    @GET("expenses")
+    suspend fun expenses(): Response<ExpensesResponse>
+
+    @POST("expenses")
+    suspend fun addExpense(@Body body: ExpenseBody): Response<ExpenseResponse>
 }
