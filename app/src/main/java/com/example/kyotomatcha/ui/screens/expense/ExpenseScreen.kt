@@ -20,6 +20,8 @@ import com.example.kyotomatcha.ui.components.OmochaLogo
 import androidx.compose.ui.platform.LocalContext
 import com.example.kyotomatcha.data.local.SessionManager
 import com.example.kyotomatcha.util.DateUtil
+import com.example.kyotomatcha.util.CurrencyUtil
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kyotomatcha.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,8 +33,14 @@ fun ExpenseScreen(
     onNavigateToAbsen: () -> Unit,
     onNavigateToOrder: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onInventoryClick: () -> Unit
+    onInventoryClick: () -> Unit,
+    viewModel: ExpenseViewModel = viewModel()
 ) {
+    val items by viewModel.items.collectAsState()
+    val total by viewModel.total.collectAsState()
+    val loaded by viewModel.loaded.collectAsState()
+    val loadError by viewModel.loadError.collectAsState()
+    LaunchedEffect(Unit) { viewModel.refresh() }
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
@@ -121,9 +129,9 @@ fun ExpenseScreen(
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(text = "Total pengeluaran hari ini", fontSize = 12.sp, color = TextMuted)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "Rp47.000", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                    Text(text = CurrencyUtil.formatRupiah(total), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(text = "2 catatan · $currentDate", fontSize = 12.sp, color = TextMuted)
+                    Text(text = "${items.size} catatan · $currentDate", fontSize = 12.sp, color = TextMuted)
                 }
             }
 
@@ -135,30 +143,27 @@ fun ExpenseScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(text = "Catatan pengeluaran", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
-                Text(text = "2 catatan", fontSize = 12.sp, color = TextMuted)
+                Text(text = "${items.size} catatan", fontSize = 12.sp, color = TextMuted)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            ExpenseItemCard(
-                title = "Uang makan",
-                category = "Uang makan",
-                amount = "Rp30.000",
-                time = "Dicatat $userName · 09:00",
-                date = currentDate,
-                branch = "Kyoto-Matcha"
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            ExpenseItemCard(
-                title = "Es batu",
-                category = "Bahan",
-                amount = "Rp17.000",
-                time = "Dicatat $userName · 08:30",
-                date = currentDate,
-                branch = "Kyoto-Matcha"
-            )
+            if (loadError.isNotEmpty() && items.isEmpty()) {
+                Text(text = loadError, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = androidx.compose.ui.graphics.Color(0xFFC53030))
+            } else if (items.isEmpty()) {
+                Text(text = if (loaded) "Belum ada pengeluaran hari ini." else "Memuat...", fontSize = 13.sp, color = TextMuted)
+            }
+            items.forEachIndexed { index, expense ->
+                if (index > 0) Spacer(modifier = Modifier.height(12.dp))
+                ExpenseItemCard(
+                    title = expense.description,
+                    category = expense.category_label,
+                    amount = CurrencyUtil.formatRupiah(expense.amount),
+                    time = "Dicatat ${expense.recorded_by} · ${expense.created_at.substring(11, 16)}",
+                    date = DateUtil.isoToMedium(expense.expense_date),
+                    branch = "Kyoto-Matcha"
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

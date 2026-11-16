@@ -22,6 +22,9 @@ object DateUtil {
         return sdf.format(Date())
     }
 
+    /** "2026-11-10" -> "10 Nov 2026" */
+    fun isoToMedium(iso: String): String = "${isoToShort(iso)} ${iso.take(4)}"
+
     /** "2026-11-10" -> "10 Nov" */
     fun isoToShort(iso: String): String {
         val months = listOf("Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
