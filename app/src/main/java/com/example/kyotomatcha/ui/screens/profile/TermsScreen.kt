@@ -62,7 +62,7 @@ fun TermsScreen(
                 color = CardBackground
             ) {
                 Text(
-                    text = "Syarat penggunaan O-MACHA",
+                    text = "Syarat penggunaan Kyoto-Matcha",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
@@ -94,7 +94,7 @@ fun TermsScreen(
                 shadowElevation = 1.dp
             ) {
                 Text(
-                    text = "Halaman ini menjelaskan ketentuan penggunaan O-MACHA oleh tim kedai Kyoto-Matcha.",
+                    text = "Halaman ini menjelaskan ketentuan penggunaan Kyoto-Matcha oleh tim kedai Kyoto-Matcha.",
                     modifier = Modifier.padding(16.dp),
                     fontSize = 12.sp,
                     color = TextMuted,
@@ -123,7 +123,7 @@ fun TermsScreen(
             PolicySectionItem(
                 number = "03",
                 title = "Informasi layanan",
-                body = "O-MACHA mendukung absensi berbasis lokasi, pencatatan pesanan, QRIS, stok, dan laporan operasional kedai."
+                body = "Kyoto-Matcha mendukung absensi berbasis lokasi, pencatatan pesanan, QRIS, stok, dan laporan operasional kedai."
             )
 
             Spacer(modifier = Modifier.height(24.dp))

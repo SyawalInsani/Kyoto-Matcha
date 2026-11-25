@@ -75,7 +75,7 @@ fun AboutAppScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "O-MACHA",
+                text = "Kyoto-Matcha",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = PrimaryDarkGreen
@@ -122,7 +122,7 @@ fun AboutAppScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "O-MACHA adalah aplikasi operasional kedai Kyoto-Matcha untuk absensi berbasis lokasi, pencatatan pesanan dan pembayaran QRIS, inventaris, serta laporan harian.",
+                        text = "Aplikasi ini dipakai di kedai Kyoto-Matcha untuk absensi berbasis lokasi, pencatatan pesanan dan pembayaran QRIS, inventaris, serta laporan harian.",
                         fontSize = 12.sp,
                         color = TextMuted,
                         lineHeight = 18.sp
@@ -156,7 +156,7 @@ fun AboutAppScreen(
                 ) {
                     ProfileMenuRow(title = "Kebijakan Privasi", onClick = onNavigateToPrivacy)
                     ProfileMenuRow(title = "Syarat & Ketentuan", onClick = onNavigateToTerms)
-                    AboutInfoMenuRow(title = "Pembuat aplikasi", value = "Tim O-MACHA")
+                    AboutInfoMenuRow(title = "Pembuat aplikasi", value = "Tim Kyoto-Matcha")
                 }
             }
 
@@ -165,7 +165,7 @@ fun AboutAppScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "O-MACHA • 1 cabang • 3 karyawan", fontSize = 12.sp, color = TextMuted)
+                Text(text = "Kyoto-Matcha • 1 cabang • 3 karyawan", fontSize = 12.sp, color = TextMuted)
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(text = "Sekitar 30 pesanan per hari", fontSize = 12.sp, color = TextMuted)
             }

@@ -77,7 +77,7 @@ fun OnboardingScreen(
                 ) {
                     OmochaLogo(size = 28.dp)
                     Text(
-                        text = "O-MACHA",
+                        text = "Kyoto-Matcha",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryDarkGreen

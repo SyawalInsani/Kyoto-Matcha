@@ -29,6 +29,7 @@ import com.example.kyotomatcha.ui.theme.White
 fun OrderDetailScreen(
     orderId: String,
     onNavigateBack: () -> Unit,
+    onPayQris: () -> Unit,
     viewModel: OrderViewModel = viewModel()
 ) {
     val orders by viewModel.orders.collectAsState()
@@ -81,9 +82,13 @@ fun OrderDetailScreen(
                     if (status == "Menunggu bayar") {
                         // Pembayaran offline dikonfirmasi kasir; server mencatat siapa yang mengonfirmasi.
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                            listOf("qris" to "Terima QRIS", "tunai" to "Terima Tunai").forEach { (method, label) ->
+                            listOf("qris" to "Foto Bukti QRIS", "tunai" to "Terima Tunai").forEach { (method, label) ->
                                 Button(
-                                    onClick = { viewModel.updateOrderStatus(orderId, "Diproses", payMethod = method) },
+                                    // QRIS: foto bukti bayar dulu (dibaca & dicocokkan server). Tunai: langsung konfirmasi.
+                                    onClick = {
+                                        if (method == "qris") onPayQris()
+                                        else viewModel.updateOrderStatus(orderId, "Diproses", payMethod = method)
+                                    },
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(52.dp),

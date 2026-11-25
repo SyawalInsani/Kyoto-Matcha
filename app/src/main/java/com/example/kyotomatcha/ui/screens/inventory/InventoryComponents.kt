@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,7 +31,8 @@ fun LabeledField(
     onChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     numeric: Boolean = false,
-    placeholder: String = ""
+    placeholder: String = "",
+    visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     Column(modifier = modifier) {
         Text(text = label, fontSize = 12.sp, color = TextMuted)
@@ -38,6 +40,7 @@ fun LabeledField(
         OutlinedTextField(
             value = value,
             onValueChange = onChange,
+            visualTransformation = visualTransformation,
             placeholder = if (placeholder.isEmpty()) null else ({ Text(placeholder, color = TextMuted, fontSize = 13.sp) }),
             keyboardOptions = KeyboardOptions(keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text),
             shape = RoundedCornerShape(16.dp),

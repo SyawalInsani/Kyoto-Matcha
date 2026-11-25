@@ -56,7 +56,7 @@ fun WelcomeScreen(
                 ) {
                     OmochaLogo(size = 32.dp)
                     Text(
-                        text = "O-MACHA",
+                        text = "Kyoto-Matcha",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryDarkGreen
@@ -81,7 +81,7 @@ fun WelcomeScreen(
                 modifier = Modifier.padding(vertical = 12.dp)
             ) {
                 Text(
-                    text = "O-MACHA POS",
+                    text = "Kyoto-Matcha POS",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryDarkGreen,

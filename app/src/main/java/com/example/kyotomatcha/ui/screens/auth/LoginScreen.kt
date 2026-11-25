@@ -67,7 +67,7 @@ fun LoginScreen(
                 ) {
                     OmochaLogo(size = 32.dp)
                     Text(
-                        text = "O-MACHA",
+                        text = "Kyoto-Matcha",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryDarkGreen
@@ -86,7 +86,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Masuk ke O-MACHA untuk mulai bekerja.",
+                    text = "Masuk ke Kyoto-Matcha untuk mulai bekerja.",
                     fontSize = 14.sp,
                     color = TextMuted
                 )

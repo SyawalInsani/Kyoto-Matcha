@@ -29,7 +29,7 @@ fun OmochaLogo(
 ) {
     Image(
         painter = painterResource(id = R.drawable.kyoto_matcha),
-        contentDescription = "O-MACHA Logo",
+        contentDescription = "Kyoto-Matcha Logo",
         contentScale = ContentScale.Fit,
         modifier = modifier.size(size)
     )

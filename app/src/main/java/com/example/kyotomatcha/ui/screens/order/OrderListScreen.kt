@@ -35,6 +35,7 @@ import com.example.kyotomatcha.ui.theme.White
 fun OrderListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToQrisHistory: () -> Unit,
     onNavigateHome: () -> Unit,
     onNavigateToAbsen: () -> Unit,
     onNavigateToOrder: () -> Unit,
@@ -45,6 +46,9 @@ fun OrderListScreen(
     val orders by viewModel.orders.collectAsState()
     val waitingCount = orders.count { it.status.equals("Menunggu bayar", ignoreCase = true) }
     val totalSales = orders.filter { !it.status.equals("Batal", ignoreCase = true) }.sumOf { it.total }
+    val activeOrders = orders.filter { !it.status.equals("Batal", ignoreCase = true) }
+    // Tiap minuman memakai 1 gelas; dessert tidak.
+    val cupCount = activeOrders.sumOf { o -> o.items.filter { it.menuItem.category.equals("Minuman", ignoreCase = true) }.sumOf { it.quantity } }
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
     val userName = sessionManager.getUserName()
@@ -114,6 +118,14 @@ fun OrderListScreen(
                 }
 
                 Text(
+                    text = "Riwayat QRIS",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MatchaGreen,
+                    modifier = Modifier.clickable { onNavigateToQrisHistory() }
+                )
+
+                Text(
                     text = "✕",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -149,7 +161,7 @@ fun OrderListScreen(
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(text = "Pesanan - gelas", fontSize = 11.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "30 • 30", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
+                        Text(text = "${activeOrders.size} • $cupCount", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen)
                     }
                 }
 

@@ -18,6 +18,7 @@ import com.example.kyotomatcha.ui.theme.*
 import com.example.kyotomatcha.util.CurrencyUtil
 import com.example.kyotomatcha.util.DateUtil
 import com.example.kyotomatcha.util.QuantityUtil
+import com.example.kyotomatcha.util.ThousandsDotTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +42,8 @@ fun StockInScreen(
 
     // Bersihkan sisa hasil/kesalahan dari pembukaan sebelumnya.
     LaunchedEffect(Unit) { viewModel.clearForm() }
+    // Pesan "wajib diisi" tidak boleh menempel setelah isian diperbaiki.
+    LaunchedEffect(selectedId, jumlah, hargaBeli) { viewModel.clearError() }
 
     Scaffold(
         topBar = {
@@ -106,7 +109,10 @@ fun StockInScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                LabeledField("Harga beli · total (opsional)", hargaBeli, { hargaBeli = it.filter { c -> c.isDigit() } }, numeric = true, placeholder = "Rp")
+                LabeledField(
+                    "Harga beli · total", hargaBeli, { hargaBeli = it.filter { c -> c.isDigit() }.take(10) },
+                    numeric = true, placeholder = "Rp", visualTransformation = ThousandsDotTransformation
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 LabeledField("Pemasok (opsional)", pemasok, { pemasok = it })
                 Spacer(modifier = Modifier.height(16.dp))

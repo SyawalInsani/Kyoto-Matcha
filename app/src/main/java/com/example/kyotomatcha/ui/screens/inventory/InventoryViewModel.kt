@@ -61,6 +61,11 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    /** Hapus pesan kesalahan lama (dipanggil saat pengguna mengubah isian). */
+    fun clearError() {
+        _formError.value = ""
+    }
+
     fun clearForm() {
         _formError.value = ""
         _result.value = null
@@ -72,6 +77,7 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         when {
             itemId == null -> _formError.value = "Pilih item terlebih dulu."
             qty == null || qty <= 0 -> _formError.value = "Jumlah harus berupa angka lebih dari 0."
+            price == null || price <= 0 -> _formError.value = "Harga beli wajib diisi."
             else -> save { InventoryRepository.stockIn(itemId, qty, price, supplier, note) }
         }
     }

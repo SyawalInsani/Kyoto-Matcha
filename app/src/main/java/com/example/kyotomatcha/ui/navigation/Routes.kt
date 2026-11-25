@@ -27,7 +27,11 @@ sealed class Routes(val route: String) {
     object OrderDetail : Routes("order_detail/{orderId}") {
         fun createRoute(orderId: String): String = "order_detail/$orderId"
     }
-    object PaymentConfirmation : Routes("payment_confirmation")
+    // orderId kosong = pesanan terbaru (alur pesanan baru); terisi = bayar pesanan tertentu dari detail pesanan.
+    object PaymentConfirmation : Routes("payment_confirmation?orderId={orderId}") {
+        fun createRoute(orderId: String): String = "payment_confirmation?orderId=$orderId"
+    }
+    object QrisHistory : Routes("qris_history")
     object Profile : Routes("profile")
     object EditProfile : Routes("edit_profile")
     object ChangePassword : Routes("change_password")

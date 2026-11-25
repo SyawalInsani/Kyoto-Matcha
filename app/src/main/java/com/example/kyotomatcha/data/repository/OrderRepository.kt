@@ -7,6 +7,7 @@ import com.example.kyotomatcha.data.remote.OrderDto
 import com.example.kyotomatcha.data.remote.OrderItemRequest
 import com.example.kyotomatcha.data.remote.OrderStatusRequest
 import com.example.kyotomatcha.data.remote.PayRequest
+import com.example.kyotomatcha.data.remote.ProofDto
 import com.example.kyotomatcha.data.remote.RetrofitClient
 import com.example.kyotomatcha.data.remote.toApiError
 import com.example.kyotomatcha.ui.screens.order.CartItem
@@ -15,6 +16,9 @@ import com.example.kyotomatcha.ui.screens.order.OrderModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import okhttp3.MediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 
 object OrderRepository {
     // Menu diambil dari server (GET /api/products). Daftar ini kosong sampai berhasil dimuat.
@@ -64,9 +68,13 @@ object OrderRepository {
     private val _orders = MutableStateFlow<List<OrderModel>>(emptyList())
     val orders: StateFlow<List<OrderModel>> = _orders.asStateFlow()
 
+    // Semua minuman memakai gelas yang sama, jadi stok yang tampil berkurang bersama. Dessert punya stok sendiri.
+    private fun sharesStock(a: MenuItem, b: MenuItem) =
+        if (a.category.equals("Minuman", ignoreCase = true)) b.category.equals("Minuman", ignoreCase = true) else a.id == b.id
+
     fun addToCart(item: MenuItem) {
         val currentItems = _menuItems.value.map { menuItem ->
-            if (menuItem.id == item.id && menuItem.stock > 0) {
+            if (sharesStock(item, menuItem) && menuItem.stock > 0) {
                 menuItem.copy(stock = menuItem.stock - 1)
             } else {
                 menuItem
@@ -91,8 +99,9 @@ object OrderRepository {
         if (item != null) {
             item.quantity += delta
 
+            val changed = _menuItems.value.find { it.id == itemId }
             val currentItems = _menuItems.value.map { menuItem ->
-                if (menuItem.id == itemId) {
+                if (changed != null && sharesStock(changed, menuItem)) {
                     val newStock = menuItem.stock - delta
                     menuItem.copy(stock = maxOf(0, newStock))
                 } else {
@@ -197,6 +206,54 @@ object OrderRepository {
             Log.e("OrderRepository", "Ubah status pesanan gagal", e)
             NETWORK_ERROR_MESSAGE
         }
+    }
+
+    /** Kirim foto bukti bayar QRIS; server membaca dan mencocokkannya dengan pesanan. Pesanan belum berubah status. */
+    suspend fun uploadProof(orderNumber: String, jpeg: ByteArray): Pair<ProofDto?, String?> {
+        val order = _orders.value.firstOrNull { it.id.equals(orderNumber, ignoreCase = true) }
+            ?: return null to "Pesanan tidak ditemukan. Muat ulang daftar pesanan."
+        return try {
+            val part = MultipartBody.Part.createFormData("foto", "bukti.jpg", RequestBody.create(MediaType.parse("image/jpeg"), jpeg))
+            val res = RetrofitClient.apiService.uploadProof(order.serverId, part)
+            val data = res.body()?.data
+            if (res.isSuccessful && data != null) data to null else null to res.toApiError().message
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "Unggah bukti bayar gagal", e)
+            null to NETWORK_ERROR_MESSAGE
+        }
+    }
+
+    /** Lanjutkan setelah bukti sesuai: pesanan jadi Diproses dan masuk penjualan hari itu. Null = berhasil. */
+    suspend fun confirmProof(orderNumber: String): String? {
+        val order = _orders.value.firstOrNull { it.id.equals(orderNumber, ignoreCase = true) }
+            ?: return "Pesanan tidak ditemukan. Muat ulang daftar pesanan."
+        return try {
+            val res = RetrofitClient.apiService.confirmProof(order.serverId)
+            loadOrders()
+            if (res.isSuccessful) null else res.toApiError().message
+        } catch (e: Exception) {
+            Log.e("OrderRepository", "Konfirmasi bukti bayar gagal", e)
+            NETWORK_ERROR_MESSAGE
+        }
+    }
+
+    /** Riwayat pembayaran QRIS offline hari ini. Pair: (daftar, pesan error). */
+    suspend fun qrisPayments(): Pair<List<ProofDto>, String?> = try {
+        val res = RetrofitClient.apiService.qrisPayments()
+        val rows = res.body()?.data
+        if (res.isSuccessful && rows != null) rows to null else emptyList<ProofDto>() to res.toApiError().message
+    } catch (e: Exception) {
+        Log.e("OrderRepository", "Memuat riwayat QRIS gagal", e)
+        emptyList<ProofDto>() to NETWORK_ERROR_MESSAGE
+    }
+
+    /** Hapus foto bukti agar hemat ruang di server. Hasil baca tetap ada. Mengembalikan pesan error, atau null bila berhasil. */
+    suspend fun deleteProofImage(paymentId: Int): String? = try {
+        val res = RetrofitClient.apiService.deleteProofImage(paymentId)
+        if (res.isSuccessful) null else res.toApiError().message
+    } catch (e: Exception) {
+        Log.e("OrderRepository", "Menghapus foto bukti gagal", e)
+        NETWORK_ERROR_MESSAGE
     }
 
     // Stok berubah (pesanan dicatat/dibatalkan): muat ulang menu agar angka stok sesuai server.

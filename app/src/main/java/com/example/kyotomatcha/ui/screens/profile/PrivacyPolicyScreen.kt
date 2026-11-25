@@ -62,7 +62,7 @@ fun PrivacyPolicyScreen(
                 color = CardBackground
             ) {
                 Text(
-                    text = "Kebijakan privasi O-MACHA",
+                    text = "Kebijakan privasi Kyoto-Matcha",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
@@ -94,7 +94,7 @@ fun PrivacyPolicyScreen(
                 shadowElevation = 1.dp
             ) {
                 Text(
-                    text = "Kebijakan ini menjelaskan pengelolaan data operasional aplikasi O-MACHA untuk operasional kedai Kyoto-Matcha.",
+                    text = "Kebijakan ini menjelaskan pengelolaan data operasional aplikasi Kyoto-Matcha untuk operasional kedai Kyoto-Matcha.",
                     modifier = Modifier.padding(16.dp),
                     fontSize = 12.sp,
                     color = TextMuted,
@@ -129,7 +129,7 @@ fun PrivacyPolicyScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "O-MACHA — Operasional kedai Kyoto-Matcha.",
+                text = "Kyoto-Matcha — Operasional kedai.",
                 fontSize = 11.sp,
                 color = TextMuted
             )
