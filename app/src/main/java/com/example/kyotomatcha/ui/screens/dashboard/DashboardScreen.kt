@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kyotomatcha.ui.components.BottomNavItem
+import com.example.kyotomatcha.util.DateUtil
 import com.example.kyotomatcha.ui.components.OmochaLogo
 import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.CardBackground
@@ -160,7 +161,7 @@ fun DashboardScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Selamat pagi, $userName",
+                            text = "${DateUtil.greeting()}, $userName",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryDarkGreen

@@ -2,8 +2,12 @@ package com.example.kyotomatcha.data.remote
 
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import okhttp3.MultipartBody
 import retrofit2.http.Header
+import retrofit2.http.Multipart
+import retrofit2.http.Part
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -53,6 +57,9 @@ data class ProductsResponse(val data: List<ProductDto>?)
 data class CheckOutRequest(val shift: String, val latitude: Double, val longitude: Double)
 
 data class CheckInRequest(val shift: String, val latitude: Double, val longitude: Double)
+
+// Laporan masalah dari pengguna (disimpan server sebagai berkas log, bukan tabel).
+data class FeedbackRequest(val message: String, val screen: String?, val app_version: String?)
 
 data class AttendanceDto(
     val id: Int,
@@ -155,6 +162,28 @@ data class OrderResponse(val message: String?, val data: OrderDto?)
 data class OrdersResponse(val data: List<OrderDto>?)
 
 data class PayRequest(val method: String)
+
+// Bukti bayar QRIS: foto dibaca server lalu dicocokkan dengan pesanan.
+data class ProofCheckDto(val key: String, val label: String, val ok: Boolean?, val detail: String?)
+
+data class ProofDto(
+    val payment_id: Int,
+    val order_id: Int,
+    val order_number: String,
+    val status: String, // sesuai, perlu_dicek, tidak_sesuai, terkonfirmasi
+    val expected_amount: Int,
+    val ocr_amount: Int?,
+    val paid_at: String?,
+    val bank: String?,
+    val reference: String?,
+    val has_image: Boolean,
+    val checks: List<ProofCheckDto>?,
+    val created_at: String
+)
+
+data class ProofResponse(val message: String?, val data: ProofDto?)
+
+data class QrisPaymentsResponse(val data: List<ProofDto>?)
 
 data class OrderStatusRequest(val status: String, val cancel_reason: String?)
 
@@ -316,6 +345,28 @@ interface ApiService {
     @POST("orders/{id}/pay")
     suspend fun payOrder(@Path("id") id: Int, @Body body: PayRequest): Response<OrderResponse>
 
+    @Multipart
+    @POST("orders/{id}/proof")
+    suspend fun uploadProof(@Path("id") id: Int, @Part foto: MultipartBody.Part): Response<ProofResponse>
+
+    @POST("orders/{id}/proof/confirm")
+    suspend fun confirmProof(@Path("id") id: Int): Response<MessageResponse>
+
+    @GET("payments/qris")
+    suspend fun qrisPayments(): Response<QrisPaymentsResponse>
+
+    @DELETE("payments/{id}/image")
+    suspend fun deleteProofImage(@Path("id") id: Int): Response<MessageResponse>
+
+    @POST("feedback")
+    suspend fun sendFeedback(@Body body: FeedbackRequest): Response<MessageResponse>
+
+    @GET("notifications")
+    suspend fun notifications(
+        @Query("since") since: String? = null,
+        @Query("limit") limit: Int? = null
+    ): Response<NotificationsResponse>
+
     @POST("orders/{id}/status")
     suspend fun updateOrderStatus(@Path("id") id: Int, @Body body: OrderStatusRequest): Response<OrderResponse>
 
@@ -358,3 +409,7 @@ interface ApiService {
     @POST("expenses")
     suspend fun addExpense(@Body body: ExpenseBody): Response<ExpenseResponse>
 }
+
+// Notifikasi dari server: pembayaran QRIS masuk, stok hampir habis/habis.
+data class NotificationDto(val id: String, val type: String, val title: String, val body: String, val created_at: String)
+data class NotificationsResponse(val data: List<NotificationDto>, val server_time: String?)

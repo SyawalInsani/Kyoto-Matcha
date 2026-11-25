@@ -31,6 +31,7 @@ import com.example.kyotomatcha.ui.screens.order.OrderListScreen
 import com.example.kyotomatcha.ui.screens.order.OrderScreen
 import com.example.kyotomatcha.ui.screens.order.OrderSummaryScreen
 import com.example.kyotomatcha.ui.screens.order.PaymentConfirmationScreen
+import com.example.kyotomatcha.ui.screens.order.QrisHistoryScreen
 import com.example.kyotomatcha.ui.screens.order.QrisPaymentScreen
 import com.example.kyotomatcha.ui.screens.order.SavedOrderScreen
 import com.example.kyotomatcha.ui.screens.profile.AboutAppScreen
@@ -306,7 +307,7 @@ fun AppNavGraph() {
                     navController.popBackStack()
                 },
                 onNavigateToConfirmation = {
-                    navController.navigate(Routes.PaymentConfirmation.route)
+                    navController.navigate(Routes.PaymentConfirmation.createRoute(""))
                 },
                 onNavigateToSavedOrder = {
                     navController.navigate(Routes.OrderList.route) {
@@ -340,6 +341,9 @@ fun AppNavGraph() {
                 onNavigateToDetail = { orderId ->
                     navController.navigate(Routes.OrderDetail.createRoute(orderId))
                 },
+                onNavigateToQrisHistory = {
+                    navController.navigate(Routes.QrisHistory.route)
+                },
                 onNavigateHome = {
                     navController.navigateToTab(Routes.Dashboard.route)
                 },
@@ -366,11 +370,21 @@ fun AppNavGraph() {
                 orderId = orderId,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onPayQris = {
+                    navController.navigate(Routes.PaymentConfirmation.createRoute(orderId))
                 }
             )
         }
-        composable(Routes.PaymentConfirmation.route) {
+        composable(Routes.QrisHistory.route) {
+            QrisHistoryScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Routes.PaymentConfirmation.route,
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType; defaultValue = "" })
+        ) { backStackEntry ->
             PaymentConfirmationScreen(
+                orderNumber = backStackEntry.arguments?.getString("orderId").orEmpty(),
                 onNavigateBack = {
                     navController.popBackStack()
                 },

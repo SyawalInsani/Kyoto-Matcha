@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
+import com.example.kyotomatcha.data.notification.NotificationScheduler
 import com.example.kyotomatcha.ui.navigation.AppNavGraph
 import com.example.kyotomatcha.ui.theme.KyotoMatchaTheme
 
@@ -18,6 +19,10 @@ class MainActivity : ComponentActivity() {
     private val localNetworkPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
+    // Android 13 ke atas: notifikasi baru muncul setelah pengguna mengizinkan.
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= 37 &&
@@ -25,6 +30,12 @@ class MainActivity : ComponentActivity() {
         ) {
             localNetworkPermission.launch(LOCAL_NETWORK)
         }
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+        NotificationScheduler.start(applicationContext)
         enableEdgeToEdge()
         setContent {
             KyotoMatchaTheme {

@@ -44,7 +44,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "O-MACHA",
+                text = "Kyoto-Matcha",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = PrimaryDarkGreen,

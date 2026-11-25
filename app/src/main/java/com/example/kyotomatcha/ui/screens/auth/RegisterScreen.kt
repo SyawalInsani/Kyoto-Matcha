@@ -95,7 +95,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Buat akun O-MACHA",
+                text = "Buat akun Kyoto-Matcha",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = PrimaryDarkGreen

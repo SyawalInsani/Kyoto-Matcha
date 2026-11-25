@@ -1,6 +1,5 @@
 package com.example.kyotomatcha.ui.screens.dashboard
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,12 +18,15 @@ import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
 import com.example.kyotomatcha.ui.theme.TextMuted
 import com.example.kyotomatcha.ui.theme.White
+import com.example.kyotomatcha.util.DateUtil
 
 @Composable
 fun NotificationScreen(
     onNavigateBack: () -> Unit,
     viewModel: NotificationViewModel = viewModel()
 ) {
+    val items by viewModel.items.collectAsState()
+    val error by viewModel.error.collectAsState()
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -38,7 +40,6 @@ fun NotificationScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            // Top App Bar
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,108 +65,35 @@ fun NotificationScreen(
                 }
 
                 Text(
-                    text = "✓",
-                    fontSize = 18.sp,
+                    text = "↻",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryDarkGreen,
-                    modifier = Modifier.clickable { /* mark all as read */ }
+                    modifier = Modifier.clickable { viewModel.load() }
                 )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Text(
-                text = "Selasa, 3 November 2026",
-                fontSize = 13.sp,
-                color = TextMuted
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Unread badge
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFFE6F4EA)
-            ) {
-                Text(
-                    text = "3 notifikasi belum dibaca",
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF137333)
+            val list = items
+            when {
+                list == null -> CircularProgressIndicator()
+                error.isNotEmpty() -> Text(text = error, fontSize = 13.sp, color = Color(0xFFC53030))
+                list.isEmpty() -> Text(
+                    text = "Belum ada notifikasi. Pembayaran QRIS yang masuk dan stok yang hampir habis muncul di sini.",
+                    fontSize = 13.sp,
+                    color = TextMuted
                 )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Notification Item 1: Pesanan baru diterima
-            NotificationCard(
-                title = "Pesanan baru diterima",
-                subtitle = "09:15 • KM-261103-038 menunggu bayar.",
-                isWarning = false
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Notification Item 2: Gelas hampir habis
-            NotificationCard(
-                title = "Gelas hampir habis",
-                subtitle = "Sisa 18 pcs • Minimum 20 pcs.",
-                isWarning = false
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Notification Item 3: Bahan perlu ditambah
-            NotificationCard(
-                title = "Bahan perlu ditambah",
-                subtitle = "Matcha Powder 1,2 kg • Whipped Cream 0,5 liter.",
-                isWarning = true
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Hari ini sebelumnya",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = PrimaryDarkGreen
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Older Notification: Absen Masuk • Terlambat
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = White,
-                shadowElevation = 1.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Absen Masuk • Terlambat",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryDarkGreen
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "08:07 • Raka. Terlambat 7 menit dari jadwal 08:00.",
-                        fontSize = 12.sp,
-                        color = TextMuted
+                else -> list.forEachIndexed { index, n ->
+                    if (index > 0) Spacer(modifier = Modifier.height(12.dp))
+                    NotificationCard(
+                        title = n.title,
+                        // created_at: "2026-11-25T00:01:36+08:00" -> "25 Nov 00:01"
+                        subtitle = "${DateUtil.isoToShort(n.created_at.take(10))} ${n.created_at.substring(11, 16)} • ${n.body}",
+                        isWarning = n.type != "pembayaran_qris"
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "2 pesanan menunggu bayar belum dihitung sebagai penjualan.",
-                fontSize = 11.sp,
-                color = TextMuted
-            )
         }
     }
 }

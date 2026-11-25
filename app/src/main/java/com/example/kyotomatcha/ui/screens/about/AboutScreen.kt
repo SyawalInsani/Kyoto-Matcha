@@ -21,7 +21,7 @@ fun AboutScreen() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "About O-MACHA",
+            text = "About Kyoto-Matcha",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = PrimaryDarkGreen

@@ -33,6 +33,17 @@ object DateUtil {
         return "${parts[2].toInt()} $month"
     }
 
+    /** Sapaan menurut jam di HP: pagi, siang, sore, malam. */
+    fun greeting(): String {
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        return when {
+            hour < 11 -> "Selamat pagi"
+            hour < 15 -> "Selamat siang"
+            hour < 18 -> "Selamat sore"
+            else -> "Selamat malam"
+        }
+    }
+
     fun getCurrentTimeFormatted(): String {
         val sdf = SimpleDateFormat("HH:mm", localeId)
         return sdf.format(Date())

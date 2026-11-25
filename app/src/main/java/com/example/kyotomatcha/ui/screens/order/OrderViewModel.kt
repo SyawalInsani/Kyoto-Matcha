@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.kyotomatcha.data.local.SessionManager
+import com.example.kyotomatcha.data.remote.ProofDto
 import kotlinx.coroutines.launch
 import com.example.kyotomatcha.data.repository.OrderRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,14 @@ data class OrderModel(
     val items: List<CartItem> = emptyList(),
     val serverId: Int = 0 // id pesanan di server (untuk bayar / ubah status)
 )
+
+// Tahap membaca foto bukti bayar QRIS di layar kasir.
+sealed interface ProofState {
+    data object Idle : ProofState
+    data object Reading : ProofState
+    data class Done(val proof: ProofDto) : ProofState
+    data class Failed(val message: String) : ProofState
+}
 
 class OrderViewModel(application: Application) : AndroidViewModel(application) {
     private val sessionManager = SessionManager(application)
@@ -77,6 +86,37 @@ class OrderViewModel(application: Application) : AndroidViewModel(application) {
             OrderRepository.loadOrders()
         }
     }
+
+    private val _proof = MutableStateFlow<ProofState>(ProofState.Idle)
+    val proof: StateFlow<ProofState> = _proof.asStateFlow()
+
+    val isOwner: Boolean get() = sessionManager.getUserRole().equals("pemilik", ignoreCase = true)
+
+    /** Kirim foto bukti; hasil (sesuai / perlu dicek / tidak sesuai) muncul di [proof]. */
+    fun sendProof(orderNumber: String, jpeg: ByteArray) {
+        if (_proof.value == ProofState.Reading) return
+        viewModelScope.launch {
+            _proof.value = ProofState.Reading
+            val (data, error) = OrderRepository.uploadProof(orderNumber, jpeg)
+            _proof.value = if (data != null) ProofState.Done(data) else ProofState.Failed(error ?: "Foto gagal dibaca.")
+        }
+    }
+
+    fun resetProof() {
+        _proof.value = ProofState.Idle
+    }
+
+    fun confirmProof(orderNumber: String, onDone: (String?) -> Unit) {
+        viewModelScope.launch {
+            val error = OrderRepository.confirmProof(orderNumber)
+            _orderError.value = error.orEmpty()
+            onDone(error)
+        }
+    }
+
+    suspend fun loadQrisPayments() = OrderRepository.qrisPayments()
+
+    suspend fun deleteProofImage(paymentId: Int) = OrderRepository.deleteProofImage(paymentId)
 
     fun refreshOrders() {
         viewModelScope.launch { OrderRepository.loadOrders() }

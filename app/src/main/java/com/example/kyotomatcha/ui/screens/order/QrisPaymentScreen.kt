@@ -63,7 +63,7 @@ fun QrisPaymentScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MatchaGreen)
                     ) {
                         Text(
-                            text = "Konfirmasi Pembayaran",
+                            text = "Foto Bukti Bayar",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = White
@@ -198,7 +198,7 @@ fun QrisPaymentScreen(
                         color = Color(0xFFFEF3C7)
                     ) {
                         Text(
-                            text = "Menunggu bukti bayar",
+                            text = "Menunggu pelanggan membayar",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,

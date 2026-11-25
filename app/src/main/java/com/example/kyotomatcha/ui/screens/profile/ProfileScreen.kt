@@ -54,6 +54,11 @@ fun ProfileScreen(
     val role by viewModel.role.collectAsState()
     val scrollState = rememberScrollState()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showReportDialog by remember { mutableStateOf(false) }
+    var reportText by remember { mutableStateOf("") }
+    var reportStatus by remember { mutableStateOf("") }
+    var reportOk by remember { mutableStateOf(false) }
+    var reportSending by remember { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
@@ -210,6 +215,7 @@ fun ProfileScreen(
                     ProfileMenuRow(title = "Ubah profil", onClick = onNavigateToEditProfile)
                     ProfileMenuRow(title = "Ubah kata sandi", onClick = onNavigateToChangePassword)
                     ProfileMenuRow(title = "Pengaturan notifikasi", onClick = onNavigateToNotifications)
+                    ProfileMenuRow(title = "Laporkan masalah", onClick = { reportOk = false; reportStatus = ""; showReportDialog = true })
                     ProfileMenuRow(title = "Tentang Aplikasi", onClick = onNavigateToAbout)
                     ProfileMenuRow(title = "Kebijakan Privasi", onClick = onNavigateToPrivacy)
                     ProfileMenuRow(title = "Syarat & Ketentuan", onClick = onNavigateToTerms)
@@ -257,13 +263,67 @@ fun ProfileScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "O-MACHA • Versi 1.0.0",
+                    text = "Kyoto-Matcha • Versi 1.0.0",
                     fontSize = 12.sp,
                     color = TextMuted
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Laporkan masalah
+        if (showReportDialog) {
+            AlertDialog(
+                onDismissRequest = { if (!reportSending) showReportDialog = false },
+                title = { Text(text = "Laporkan masalah", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryDarkGreen) },
+                text = {
+                    Column {
+                        Text(
+                            text = "Ceritakan apa yang terjadi: di layar mana dan apa yang Anda tekan.",
+                            fontSize = 13.sp,
+                            color = TextMuted
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = reportText,
+                            onValueChange = { reportText = it.take(1000); reportStatus = "" },
+                            minLines = 3,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (reportStatus.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = reportStatus,
+                                fontSize = 12.sp,
+                                color = if (reportOk) Color(0xFF137333) else Color(0xFFC53030)
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        enabled = !reportSending && !reportOk,
+                        onClick = {
+                            reportSending = true
+                            viewModel.sendReport(reportText) { ok, msg ->
+                                reportSending = false
+                                reportOk = ok
+                                reportStatus = msg
+                                if (ok) reportText = ""
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDarkGreen)
+                    ) {
+                        Text(text = if (reportSending) "Mengirim..." else "Kirim", color = White)
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(onClick = { showReportDialog = false }) {
+                        Text(text = if (reportOk) "Tutup" else "Batal", color = PrimaryDarkGreen)
+                    }
+                }
+            )
         }
 
         // Logout Confirmation Dialog
@@ -294,7 +354,7 @@ fun ProfileScreen(
                 },
                 text = {
                     Text(
-                        text = "Anda perlu masuk kembali untuk mengakses akun O-MACHA.",
+                        text = "Anda perlu masuk kembali untuk mengakses akun Kyoto-Matcha.",
                         fontSize = 13.sp,
                         color = TextMuted
                     )
