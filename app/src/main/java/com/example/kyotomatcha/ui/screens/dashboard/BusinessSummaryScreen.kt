@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.*
@@ -120,7 +121,12 @@ fun BusinessSummaryScreen(
                         .clickable { onNotificationClick() }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(text = "🔔", fontSize = 16.sp)
+                        Icon(
+                            imageVector = Icons.Filled.Notifications,
+                            contentDescription = "Notifikasi",
+                            modifier = Modifier.size(18.dp),
+                            tint = PrimaryDarkGreen
+                        )
                     }
                 }
             }

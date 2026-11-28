@@ -11,16 +11,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -72,6 +76,8 @@ fun AbsensiScreen(
     val message by viewModel.message.collectAsState()
     val isBusy by viewModel.isBusy.collectAsState()
     val scrollState = rememberScrollState()
+    var showFullMapDialog by remember { mutableStateOf(false) }
+    var recenterTrigger by remember { mutableIntStateOf(0) }
 
     // Jam berjalan (jam HP).
     var clock by remember { mutableStateOf(currentClock()) }
@@ -209,34 +215,59 @@ fun AbsensiScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Map / Location Illustration Card
+            // ===== PETA CARD (sesuai desain referensi) =====
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                color = CardBackground
+                color = White,
+                shadowElevation = 2.dp
             ) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Filled.Map,
-                            contentDescription = "Peta",
-                            modifier = Modifier.size(36.dp),
-                            tint = PrimaryDarkGreen
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = distance?.let { "Jarak ke kedai $it m • radius ${Outlet.RADIUS_M} m" } ?: gpsStatus,
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
+                    AbsensiMap(
+                        cabangLat = Outlet.LAT,
+                        cabangLng = Outlet.LNG,
+                        radiusMeter = Outlet.RADIUS_M.toDouble(),
+                        onJarakChange = { _, _ -> },
+                        recenterTrigger = recenterTrigger,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    // Bottom-Right Floating Button
+                    Surface(
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .align(Alignment.BottomEnd)
+                            .clickable { showFullMapDialog = true },
+                        shape = RoundedCornerShape(16.dp),
+                        color = White,
+                        shadowElevation = 4.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Lihat peta lengkap",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = PrimaryDarkGreen
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.NavigateNext,
+                                contentDescription = null,
+                                tint = PrimaryDarkGreen,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
+            // ===== AKHIR PETA CARD =====
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -477,6 +508,81 @@ fun AbsensiScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        if (showFullMapDialog) {
+            AlertDialog(
+                onDismissRequest = { showFullMapDialog = false },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Peta Lokasi Kedai",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryDarkGreen
+                        )
+                        IconButton(onClick = { showFullMapDialog = false }) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Tutup",
+                                tint = PrimaryDarkGreen
+                            )
+                        }
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(320.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            AbsensiMap(
+                                cabangLat = Outlet.LAT,
+                                cabangLng = Outlet.LNG,
+                                radiusMeter = Outlet.RADIUS_M.toDouble(),
+                                onJarakChange = { _, _ -> },
+                                recenterTrigger = recenterTrigger,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Kedai: Kyoto-Matcha\nJarak saat ini: ${distance?.toString() ?: "-"} m (Radius izin: ${Outlet.RADIUS_M} m)",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.refresh()
+                            recenterTrigger++
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MatchaGreen)
+                    ) {
+                        Text(text = "Perbarui Lokasi", color = White)
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        onClick = { showFullMapDialog = false },
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text(text = "Tutup", color = PrimaryDarkGreen)
+                    }
+                },
+                containerColor = White
+            )
         }
     }
 }

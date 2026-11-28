@@ -52,6 +52,7 @@ fun ProfileScreen(
     val name by viewModel.name.collectAsState()
     val email by viewModel.email.collectAsState()
     val role by viewModel.role.collectAsState()
+    val profileImageUri by viewModel.profileImageUri.collectAsState()
     val scrollState = rememberScrollState()
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
@@ -140,20 +141,11 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = CardBackground,
-                            modifier = Modifier.size(64.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = Icons.Filled.AccountCircle,
-                                    contentDescription = "Avatar",
-                                    modifier = Modifier.size(36.dp),
-                                    tint = PrimaryDarkGreen
-                                )
-                            }
-                        }
+                        UserAvatarView(
+                            profileImageUri = profileImageUri,
+                            size = 64.dp,
+                            onClick = { onNavigateToEditProfile() }
+                        )
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(

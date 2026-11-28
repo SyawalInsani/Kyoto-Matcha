@@ -20,6 +20,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _userRole = MutableStateFlow(sessionManager.getUserRole())
     val userRole: StateFlow<String> = _userRole.asStateFlow()
 
+    private val _profileImageUri = MutableStateFlow(sessionManager.getProfileImageUri())
+    val profileImageUri: StateFlow<String?> = _profileImageUri.asStateFlow()
+
     private val _currentDate = MutableStateFlow(DateUtil.getCurrentDateFormatted())
     val currentDate: StateFlow<String> = _currentDate.asStateFlow()
 
@@ -32,7 +35,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _isDropdownExpanded = MutableStateFlow(false)
     val isDropdownExpanded: StateFlow<Boolean> = _isDropdownExpanded.asStateFlow()
 
-    // Angka hari ini dari server (penjualan, kehadiran, stok). null sampai pertama kali dimuat.
     val dashboard = ReportRepository.dashboard
 
     private val _loadError = MutableStateFlow("")
@@ -43,6 +45,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun refresh() {
+        _userName.value = sessionManager.getUserName()
+        _userRole.value = sessionManager.getUserRole()
+        _profileImageUri.value = sessionManager.getProfileImageUri()
         viewModelScope.launch { _loadError.value = ReportRepository.refreshDashboard().orEmpty() }
     }
 
