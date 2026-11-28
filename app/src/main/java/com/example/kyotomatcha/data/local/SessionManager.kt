@@ -73,4 +73,16 @@ class SessionManager(context: Context) {
     fun setSelectedSource(source: String) {
         prefs.edit().putString("KEY_SELECTED_SOURCE", source).apply()
     }
+
+    fun getProfileImageUri(): String? {
+        return prefs.getString("KEY_PROFILE_IMAGE_URI", null)
+    }
+
+    fun setProfileImageUri(uri: String?) {
+        if (uri == null) {
+            prefs.edit().remove("KEY_PROFILE_IMAGE_URI").apply()
+        } else {
+            prefs.edit().putString("KEY_PROFILE_IMAGE_URI", uri).apply()
+        }
+    }
 }

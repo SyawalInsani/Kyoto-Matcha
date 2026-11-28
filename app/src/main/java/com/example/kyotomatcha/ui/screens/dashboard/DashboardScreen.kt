@@ -37,9 +37,11 @@ import com.example.kyotomatcha.ui.theme.BackgroundCream
 import com.example.kyotomatcha.ui.theme.CardBackground
 import com.example.kyotomatcha.ui.theme.MatchaGreen
 import com.example.kyotomatcha.ui.theme.PrimaryDarkGreen
+import com.example.kyotomatcha.ui.components.OmochaLogo
 import com.example.kyotomatcha.ui.theme.TextMuted
 import com.example.kyotomatcha.ui.theme.White
 import com.example.kyotomatcha.util.CurrencyUtil
+import com.example.kyotomatcha.ui.screens.profile.UserAvatarView
 import androidx.compose.runtime.LaunchedEffect
 
 @Composable
@@ -56,6 +58,7 @@ fun DashboardScreen(
 ) {
     val userName by viewModel.userName.collectAsState()
     val userRole by viewModel.userRole.collectAsState()
+    val profileImageUri by viewModel.profileImageUri.collectAsState()
     val currentDate by viewModel.currentDate.collectAsState()
     val selectedBranch by viewModel.selectedBranch.collectAsState()
     val isExpanded by viewModel.isDropdownExpanded.collectAsState()
@@ -174,21 +177,12 @@ fun DashboardScreen(
                         )
                     }
 
-                    // Avatar placeholder
-                    Surface(
-                        shape = CircleShape,
-                        color = MatchaGreen,
-                        modifier = Modifier.size(44.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = userName.take(1).uppercase(),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = White
-                            )
-                        }
-                    }
+                    // Avatar User Profile
+                    UserAvatarView(
+                        profileImageUri = profileImageUri,
+                        size = 46.dp,
+                        onClick = onProfileClick
+                    )
                 }
             }
 

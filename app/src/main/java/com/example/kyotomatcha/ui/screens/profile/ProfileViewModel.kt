@@ -30,6 +30,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val _phone = MutableStateFlow("0812 8346 2705")
     val phone: StateFlow<String> = _phone.asStateFlow()
 
+    private val _profileImageUri = MutableStateFlow(sessionManager.getProfileImageUri())
+    val profileImageUri: StateFlow<String?> = _profileImageUri.asStateFlow()
+
+    fun updateProfileImage(uri: String?) {
+        _profileImageUri.value = uri
+        sessionManager.setProfileImageUri(uri)
+    }
+
     private val _reminderAbsen = MutableStateFlow(true)
     val reminderAbsen: StateFlow<Boolean> = _reminderAbsen.asStateFlow()
 

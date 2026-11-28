@@ -6,7 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Person
@@ -102,36 +104,40 @@ fun OrderListScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Daftar Pesanan",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryDarkGreen
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "$userName • Kyoto-Matcha, $currentDate",
-                        fontSize = 11.sp,
-                        color = TextMuted
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Kembali",
+                            tint = PrimaryDarkGreen
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Daftar Pesanan",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryDarkGreen
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "$userName • Kyoto-Matcha, $currentDate",
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                    }
                 }
 
-                Text(
-                    text = "Riwayat QRIS",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MatchaGreen,
-                    modifier = Modifier.clickable { onNavigateToQrisHistory() }
-                )
-
-                Text(
-                    text = "✕",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryDarkGreen,
-                    modifier = Modifier.clickable { onNavigateBack() }
-                )
+                IconButton(onClick = onNavigateToQrisHistory) {
+                    Icon(
+                        imageVector = Icons.Filled.History,
+                        contentDescription = "Riwayat QRIS",
+                        tint = PrimaryDarkGreen
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

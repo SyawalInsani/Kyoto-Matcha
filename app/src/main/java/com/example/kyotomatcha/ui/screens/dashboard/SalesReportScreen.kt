@@ -8,7 +8,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Person
@@ -95,15 +97,15 @@ fun SalesReportScreen(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        text = "←",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryDarkGreen,
-                        modifier = Modifier.clickable { onNavigateBack() }
-                    )
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Kembali",
+                            tint = PrimaryDarkGreen
+                        )
+                    }
                     Column {
                         Text(
                             text = "Laporan Penjualan",
@@ -132,7 +134,12 @@ fun SalesReportScreen(
                         }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(text = "📥", fontSize = 16.sp)
+                        Icon(
+                            imageVector = Icons.Filled.Download,
+                            contentDescription = "Unduh Laporan",
+                            modifier = Modifier.size(18.dp),
+                            tint = PrimaryDarkGreen
+                        )
                     }
                 }
             }
